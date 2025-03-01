@@ -9,7 +9,6 @@ namespace Karaté.Tests
         [Test]
         public void TestGrapheEstConnexe()
         {
-            // Création d'un graphe connexe (exemple fictif)
             Noeud[] noeuds = new Noeud[]
             {
                 new Noeud(0, new int[] { 1, 2 }),
@@ -25,7 +24,6 @@ namespace Karaté.Tests
         [Test]
         public void TestGrapheContientCycle()
         {
-            // Création d'un graphe contenant un cycle (exemple fictif)
             Noeud[] noeuds = new Noeud[]
             {
                 new Noeud(0, new int[] { 1, 2 }),
