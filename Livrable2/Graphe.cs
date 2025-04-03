@@ -1,4 +1,4 @@
-﻿using SkiaSharp;
+using SkiaSharp;
 using System.Diagnostics;
 using System.Security.Cryptography;
 
@@ -17,8 +17,6 @@ namespace Livrable2
                 graph[p-1] = new Noeud<T>(p, matrice, stations);
             }
             this.graph = graph;
-
-
         }
 
 
@@ -136,6 +134,230 @@ namespace Livrable2
 
         #endregion
 
+
+        #region PLUS COURT CHEMIN
+        public (List<int>,double) Dijkstra(int departId, int arriveeId)
+        {
+            int n = graph.Length;
+
+            // Tableau des distances minimales depuis la station de départ
+            double[] distances = new double[n];
+
+            // Tableau des stations précédentes pour reconstruire le chemin
+            int[] precedents = new int[n];
+
+            // Marqueur pour savoir quelles stations ont été visitées
+            bool[] visite = new bool[n];
+
+            // Mémorise la ligne utilisée précédemment (utile pour détecter les changements)
+            int[] lignesPrecedentes = new int[n];
+
+            // Initialisation : distances infinies, pas de prédécesseur, non visité, pas de ligne
+            for (int i = 0; i < n; i++)
+            {
+                distances[i] = double.MaxValue;
+                precedents[i] = -1;
+                visite[i] = false;
+                lignesPrecedentes[i] = -1;
+            }
+
+            // La distance de la station de départ est 0
+            distances[departId - 1] = 0;
+
+            // Boucle principale : on parcourt toutes les stations
+            for (int i = 0; i < n; i++)
+            {
+                // On cherche la station non visitée avec la distance minimale
+                int u = -1;
+                double minDistance = double.MaxValue;
+
+                for (int j = 0; j < n; j++)
+                {
+                    if (!visite[j] && distances[j] < minDistance)
+                    {
+                        minDistance = distances[j];
+                        u = j;
+                    }
+                }
+
+                // Si une station valide a été trouvée
+                if (u != -1)
+                {
+                    visite[u] = true; // Marquer la station comme visitée
+
+                    Noeud<T> noeudActuel = graph[u];
+
+                    // Parcours des voisins de la station u
+                    for (int k = 0; k < noeudActuel.Lien.Length; k++)
+                    {
+                        int v = noeudActuel.Lien[k] - 1; // Station voisine
+                        double poids = noeudActuel.Poids[k]; // Temps pour y aller
+
+                        // Recherche d'une ligne commune entre u et v
+                        int ligneCommune = -1;
+                        foreach (int ligneU in graph[u].Station.Lignes)
+                        {
+                            foreach (int ligneV in graph[v].Station.Lignes)
+                            {
+                                if (ligneU == ligneV)
+                                {
+                                    ligneCommune = ligneU;
+                                    break;
+                                }
+                            }
+                            if (ligneCommune != -1)
+                                break;
+                        }
+
+                        // Vérifie s'il y a un changement de ligne
+                        bool changementLigne = (lignesPrecedentes[u] != -1 && ligneCommune != lignesPrecedentes[u]);
+
+                        // Temps ajouté en cas de changement de ligne (+3 minutes)
+                        double tempsSupplementaire;
+                        if (changementLigne)
+                        {
+                            tempsSupplementaire = 3;
+                        }
+                        else
+                        {
+                            tempsSupplementaire = 0;
+                        }
+
+                        // Calcul de la distance totale pour aller à la station v
+                        double nouvelleDistance = distances[u] + poids + tempsSupplementaire;
+
+                        // Si on a trouvé un meilleur chemin vers v
+                        if (!visite[v] && nouvelleDistance < distances[v])
+                        {
+                            distances[v] = nouvelleDistance;
+                            precedents[v] = u;
+                            lignesPrecedentes[v] = ligneCommune;
+                        }
+                    }
+                }
+            }
+
+            // Reconstruction du chemin à partir des prédécesseurs
+            List<int> chemin = new List<int>();
+            int actuel = arriveeId - 1;
+
+            while (actuel != -1)
+            {
+                int idStation = graph[actuel].Station.Id;
+                chemin.Insert(0, idStation); // On ajoute au début pour garder le bon ordre
+                actuel = precedents[actuel]; // On remonte dans le chemin
+            }
+
+            // Vérifie que le chemin est valide
+            if (chemin.Count == 0 || chemin[0] != departId)
+            {
+                Console.WriteLine("Aucun chemin trouvé.");
+                return (null, 0);
+            }
+
+            return (chemin,distances[arriveeId-1]);
+        }
+
+        public  (List<int> chemin, double distance) Calculer(Graphe<Station> graphe, int departId, int arriveeId)
+        {
+            int n = graphe.graph.Length;
+            double[] distances = new double[n];
+            int[] precedents = new int[n];
+            int[] lignesPrecedentes = new int[n];
+
+            for (int i = 0; i < n; i++)
+            {
+                distances[i] = double.MaxValue;
+                precedents[i] = -1;
+                lignesPrecedentes[i] = -1;
+            }
+
+            distances[departId - 1] = 0;
+
+            // Relaxation des arêtes |V|-1 fois
+            for (int i = 0; i < n - 1; i++)
+            {
+                for (int u = 0; u < n; u++)
+                {
+                    Noeud<Station> noeudActuel = graphe.graph[u];
+                    for (int k = 0; k < noeudActuel.Lien.Length; k++)
+                    {
+                        int v = noeudActuel.Lien[k] - 1;
+                        double poids = noeudActuel.Poids[k];
+
+                        // Recherche ligne commune sans LINQ
+                        int ligneCommune = -1;
+                        foreach (int ligneU in graphe.graph[u].Station.Lignes)
+                        {
+                            foreach (int ligneV in graphe.graph[v].Station.Lignes)
+                            {
+                                if (ligneU == ligneV)
+                                {
+                                    ligneCommune = ligneU;
+                                    break;
+                                }
+                            }
+                            if (ligneCommune != -1)
+                                break;
+                        }
+
+                        bool changementLigne = (lignesPrecedentes[u] != -1 && ligneCommune != lignesPrecedentes[u]);
+                        double tempsSupplementaire = changementLigne ? 3 : 0;
+                        double nouvelleDistance = distances[u] + poids + tempsSupplementaire;
+
+                        if (nouvelleDistance < distances[v])
+                        {
+                            distances[v] = nouvelleDistance;
+                            precedents[v] = u;
+                            lignesPrecedentes[v] = ligneCommune;
+                        }
+                    }
+                }
+            }
+
+            // Vérifie les cycles de poids négatif (facultatif ici)
+            for (int u = 0; u < n; u++)
+            {
+                var noeud = graphe.graph[u];
+                for (int k = 0; k < noeud.Lien.Length; k++)
+                {
+                    int v = noeud.Lien[k] - 1;
+                    double poids = noeud.Poids[k];
+                    double nouvelleDistance = distances[u] + poids;
+                    if (nouvelleDistance < distances[v])
+                    {
+                        Console.WriteLine("Cycle de poids négatif détecté.");
+                        return (new List<int>(), double.NaN);
+                    }
+                }
+            }
+
+            // Reconstruction du chemin
+            List<int> chemin = new List<int>();
+            int actuel = arriveeId - 1;
+
+            while (actuel != -1)
+            {
+                chemin.Insert(0, graphe.graph[actuel].Station.Id);
+                actuel = precedents[actuel];
+            }
+
+            if (chemin.Count == 0 || chemin[0] != departId)
+            {
+                Console.WriteLine("Aucun chemin trouvé.");
+                return (new List<int>(), double.MaxValue);
+            }
+
+            Console.WriteLine("\n Chemin Bellman-Ford de " + departId + " à " + arriveeId + " (temps estimé : " + distances[arriveeId - 1] + " minutes) :");
+            foreach (int id in chemin)
+            {
+                Console.Write(graphe.graph[id - 1].Station.Nom + " --> ");
+            }
+
+            return (chemin, distances[arriveeId - 1]);
+        }
+
+        #endregion
         //Cette méthode permet de générer la matrice d'incidence des stations de métro qui est essentiel pour la suite du projet
         static double[,] MatriceIncidence(string connexion) 
         {
