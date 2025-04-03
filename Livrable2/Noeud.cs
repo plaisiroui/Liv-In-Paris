@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,9 +8,10 @@ namespace Livrable2
 {
     internal class Noeud<T>
     {
-        //Pour chaque noeud, on lui associe sa station ainsi que ses lien avec les autres stations
+        //Pour chaque noeud, on lui associe sa station ainsi que ses lien avec les autres stations et le poids des liens
         Station station;
         int[] lien;
+        double[] poids;
 
         public Noeud(int id, double[,] matrice, string stations)
         {
@@ -21,16 +22,19 @@ namespace Livrable2
                 if (matrice[id - 1, i] != 0) { k++; }
             }
             int[] list = new int[k];
+            double[] poids = new double[k];
             k = 0;
             for (int i = 0; i < matrice.GetLength(1); i++)
             {
                 if (matrice[id-1,i] != 0)
                 {
                     list[k] = i+1;
+                    poids[k] = matrice[id - 1, i];
                     k++;
                 } 
             }
             this.lien = list;
+            this.poids = poids;
         }
         public Noeud(Station station, int[] lien)
         {
@@ -44,6 +48,10 @@ namespace Livrable2
         public int[] Lien
         {
             get { return lien; }
+        }
+        public double[] Poids
+        {
+            get { return poids; }
         }
     }
 }
