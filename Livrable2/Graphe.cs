@@ -4,7 +4,7 @@ using System.Security.Cryptography;
 
 namespace Livrable2
 {
-    internal class Graphe<T>
+    public class Graphe<T>
     {
         Noeud<T>[] graph;
 
@@ -37,6 +37,8 @@ namespace Livrable2
             }
             return result;
         }
+
+       
 
         //Vérifie si le graphe contient un cycle
         static bool ContientCycle(Noeud<T>[] graphe)
