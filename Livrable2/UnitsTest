@@ -1,0 +1,79 @@
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.Collections.Generic;
+using System.IO;
+using Livrable2;
+
+namespace Livrable2.Tests
+{
+    [TestClass]
+    public class GrapheTests
+    {
+        private Graphe<int> graphe;
+        private string fichierConnexions = "Connexions.txt";
+        private string fichierStations = "StationsMetro.txt";
+
+        [TestInitialize]
+        public void Init()
+        {
+            graphe = new Graphe<int>(fichierConnexions, fichierStations);
+        }
+
+        [TestMethod]
+        public void Dijkstra_TrouveUnChemin()
+        {
+            var chemin = graphe.Dijkstra(10, 50);
+
+            Assert.IsNotNull(chemin, "Le chemin ne doit pas être nul.");
+            Assert.IsTrue(chemin.Count >= 2, "Le chemin doit contenir au moins 2 stations.");
+            Assert.AreEqual(10, chemin[0], "Le chemin doit commencer par la station de départ.");
+            Assert.AreEqual(50, chemin[^1], "Le chemin doit se terminer par la station d'arrivée.");
+        }
+
+        [TestMethod]
+        public void BellmanFord_TrouveUnChemin()
+        {
+            var chemin = graphe.BellmanFord(10, 50);
+
+            Assert.IsNotNull(chemin);
+            Assert.IsTrue(chemin.Count >= 2);
+            Assert.AreEqual(10, chemin[0]);
+            Assert.AreEqual(50, chemin[^1]);
+        }
+
+        [TestMethod]
+        public void FloydWarshall_ReconstituerCheminFonctionne()
+        {
+            var (dist, next) = graphe.FloydWarshall();
+            var chemin = graphe.ReconstituerChemin(10, 50, next);
+
+            Assert.IsNotNull(chemin);
+            Assert.IsTrue(chemin.Count >= 2);
+        }
+
+        [TestMethod]
+        public void CalculerTempsChemin_DonneTempsPositif()
+        {
+            var chemin = graphe.Dijkstra(10, 50);
+            double temps = graphe.CalculerTempsChemin(chemin);
+
+            Assert.IsTrue(temps > 0, "Le temps de trajet doit être supérieur à 0.");
+        }
+
+        [TestMethod]
+        public void NomAIdentifiant_RetourneIdentifiantCorrect()
+        {
+            int id = graphe.NomAIdentifiant("Porte de Clignancourt");
+            Assert.AreEqual(76, id);
+        }
+
+        [TestMethod]
+        public void VisualiserGrapheAvecChemin_CreeFichierImage()
+        {
+            var chemin = graphe.Dijkstra(10, 50);
+            graphe.VisualiserGrapheAvecChemin(chemin);
+
+            string filePath = "graphe_chemin_rouge.png";
+            Assert.IsTrue(File.Exists(filePath), "L'image du graphe n'a pas été générée.");
+        }
+    }
+}
