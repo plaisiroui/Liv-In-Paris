@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Livrable2
 {
-    internal class Noeud<T>
+    public class Noeud<T>
     {
         //Pour chaque noeud, on lui associe sa station ainsi que ses lien avec les autres stations et le poids des liens
         Station station;
