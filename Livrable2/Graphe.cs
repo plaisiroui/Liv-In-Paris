@@ -7,6 +7,11 @@ namespace Livrable2
     internal class Graphe<T>
     {
         Noeud<T>[] graph;
+
+        public Noeud<T>[] Graph
+        {
+            get { return graph; }
+        }
         public Graphe(string connexions, string stations)
         {
             double[,] matrice = MatriceIncidence(connexions); //On génère la martrice d'incidence qui est essentielle pour la suite 
@@ -19,6 +24,19 @@ namespace Livrable2
             this.graph = graph;
         }
 
+        //Permet de convertir le nom d'une station en son identifiant
+        public int NomAIdentifiant(string nom)
+        {
+            int result = 0;
+            for (int i = 0; i < graph.Length; i++)
+            {
+                if (nom == graph[i].Station.Nom)
+                {
+                    result = graph[i].Station.Id;
+                }
+            }
+            return result;
+        }
 
         //Vérifie si le graphe contient un cycle
         static bool ContientCycle(Noeud<T>[] graphe)
@@ -79,6 +97,7 @@ namespace Livrable2
             return result;
         }
 
+
         #region PARCOURS DE GRAPHE
         //Parcours en largeur sur le graphe à partir d'un identifiant de station
         static int[] ParcoursProfondeur(Noeud<T>[] graph, int id)
@@ -136,38 +155,80 @@ namespace Livrable2
 
 
         #region PLUS COURT CHEMIN
-        public (List<int>,double) Dijkstra(int departId, int arriveeId)
+
+        public double CalculerTempsChemin(List<int> chemin)
+        {
+            double tempsTotal = 0;
+            int lignePrecedente = -1;
+
+            for (int i = 0; i < chemin.Count - 1; i++)
+            {
+                int stationActuelleId = chemin[i];
+                int stationSuivanteId = chemin[i + 1];
+
+                Noeud<T> stationActuelle = graph[stationActuelleId - 1];
+                Noeud<T> stationSuivante = graph[stationSuivanteId - 1];
+
+                // Trouver le temps entre les deux stations
+                double temps = 0;
+                bool lienTrouve = false;
+                for (int k = 0; k < stationActuelle.Lien.Length; k++)
+                {
+                    if (stationActuelle.Lien[k] == stationSuivanteId)
+                    {
+                        temps = stationActuelle.Poids[k];
+                        lienTrouve = true;
+                        break;
+                    }
+                }
+
+                if (!lienTrouve)
+                {
+                    Console.WriteLine("Erreur. Pas de liaison directe entre deux stations");
+                    return -1;
+                }
+
+                // Trouver la ligne utilisée
+                int ligneCommune = TrouverLigneCommune(stationActuelle.Station.Lignes, stationSuivante.Station.Lignes);
+
+                if (lignePrecedente != -1 && ligneCommune != lignePrecedente)
+                {
+                    tempsTotal += 3;
+                }
+
+                tempsTotal += temps;
+                lignePrecedente = ligneCommune;
+            }
+
+            return tempsTotal;
+        }
+
+        public List<int> Dijkstra(int departId, int arriveeId)
         {
             int n = graph.Length;
 
-            // Tableau des distances minimales depuis la station de départ
+            //Tableau pour stocker les distances minimales depuis la station de départ
             double[] distances = new double[n];
 
-            // Tableau des stations précédentes pour reconstruire le chemin
+            //Tableau pour stocker les prédécesseurs
             int[] precedents = new int[n];
 
-            // Marqueur pour savoir quelles stations ont été visitées
+            //tableau pour marquer les stations déjà visitées
             bool[] visite = new bool[n];
 
-            // Mémorise la ligne utilisée précédemment (utile pour détecter les changements)
-            int[] lignesPrecedentes = new int[n];
-
-            // Initialisation : distances infinies, pas de prédécesseur, non visité, pas de ligne
+            //initialisation des tableaux
             for (int i = 0; i < n; i++)
             {
-                distances[i] = double.MaxValue;
-                precedents[i] = -1;
-                visite[i] = false;
-                lignesPrecedentes[i] = -1;
+                distances[i] = double.MaxValue;  
+                precedents[i] = -1;              
+                visite[i] = false;               
             }
 
-            // La distance de la station de départ est 0
             distances[departId - 1] = 0;
 
-            // Boucle principale : on parcourt toutes les stations
+            //programme principal
             for (int i = 0; i < n; i++)
             {
-                // On cherche la station non visitée avec la distance minimale
                 int u = -1;
                 double minDistance = double.MaxValue;
 
@@ -180,86 +241,204 @@ namespace Livrable2
                     }
                 }
 
-                // Si une station valide a été trouvée
-                if (u != -1)
+                //si aucune station accessible trouvée, on arrête
+                if (u == -1)
+                    break;
+
+                visite[u] = true;
+
+                //Pour chaque voisin de la station u
+                Noeud<T> noeudActuel = graph[u];
+                for (int k = 0; k < noeudActuel.Lien.Length; k++)
                 {
-                    visite[u] = true; // Marquer la station comme visitée
+                    int v = noeudActuel.Lien[k] - 1;      
+                    double poids = noeudActuel.Poids[k];  
 
-                    Noeud<T> noeudActuel = graph[u];
-
-                    // Parcours des voisins de la station u
-                    for (int k = 0; k < noeudActuel.Lien.Length; k++)
+                    // Si une meilleure distance est trouvée vers v via u
+                    if (!visite[v] && distances[u] + poids < distances[v])
                     {
-                        int v = noeudActuel.Lien[k] - 1; // Station voisine
-                        double poids = noeudActuel.Poids[k]; // Temps pour y aller
-
-                        // Recherche d'une ligne commune entre u et v
-                        int ligneCommune = -1;
-                        foreach (int ligneU in graph[u].Station.Lignes)
-                        {
-                            foreach (int ligneV in graph[v].Station.Lignes)
-                            {
-                                if (ligneU == ligneV)
-                                {
-                                    ligneCommune = ligneU;
-                                    break;
-                                }
-                            }
-                            if (ligneCommune != -1)
-                                break;
-                        }
-
-                        // Vérifie s'il y a un changement de ligne
-                        bool changementLigne = (lignesPrecedentes[u] != -1 && ligneCommune != lignesPrecedentes[u]);
-
-                        // Temps ajouté en cas de changement de ligne (+3 minutes)
-                        double tempsSupplementaire;
-                        if (changementLigne)
-                        {
-                            tempsSupplementaire = 3;
-                        }
-                        else
-                        {
-                            tempsSupplementaire = 0;
-                        }
-
-                        // Calcul de la distance totale pour aller à la station v
-                        double nouvelleDistance = distances[u] + poids + tempsSupplementaire;
-
-                        // Si on a trouvé un meilleur chemin vers v
-                        if (!visite[v] && nouvelleDistance < distances[v])
-                        {
-                            distances[v] = nouvelleDistance;
-                            precedents[v] = u;
-                            lignesPrecedentes[v] = ligneCommune;
-                        }
+                        distances[v] = distances[u] + poids;
+                        precedents[v] = u;
                     }
                 }
             }
 
-            // Reconstruction du chemin à partir des prédécesseurs
+            //reconstruction du chemin
             List<int> chemin = new List<int>();
             int actuel = arriveeId - 1;
 
             while (actuel != -1)
             {
-                int idStation = graph[actuel].Station.Id;
-                chemin.Insert(0, idStation); // On ajoute au début pour garder le bon ordre
-                actuel = precedents[actuel]; // On remonte dans le chemin
+                chemin.Insert(0, graph[actuel].Station.Id);
+                actuel = precedents[actuel];
             }
 
-            // Vérifie que le chemin est valide
+            //on vérifie que il y a bien un chemin
             if (chemin.Count == 0 || chemin[0] != departId)
             {
                 Console.WriteLine("Aucun chemin trouvé.");
-                return (null, 0);
+                return null;
             }
 
-            return (chemin,distances[arriveeId-1]);
+            return chemin;
         }
 
+        public List<int> BellmanFord(int departId, int arriveeId)
+        {
+            int n = graph.Length;
+
+            double[] distances = new double[n];
+            int[] precedents = new int[n];
+
+            // Initialisation
+            for (int i = 0; i < n; i++)
+            {
+                distances[i] = double.MaxValue;
+                precedents[i] = -1;
+            }
+
+            distances[departId - 1] = 0;
+
+            // Boucle de relaxation |n-1| fois
+            for (int i = 0; i < n - 1; i++)
+            {
+                foreach (var noeud in graph)
+                {
+                    int u = noeud.Station.Id - 1;
+
+                    for (int k = 0; k < noeud.Lien.Length; k++)
+                    {
+                        int v = noeud.Lien[k] - 1;
+                        double poids = noeud.Poids[k];
+
+                        if (distances[u] != double.MaxValue && distances[u] + poids < distances[v])
+                        {
+                            distances[v] = distances[u] + poids;
+                            precedents[v] = u;
+                        }
+                    }
+                }
+            }
+
+            // Reconstruction du chemin
+            List<int> chemin = new List<int>();
+            int actuel = arriveeId - 1;
+
+            while (actuel != -1)
+            {
+                chemin.Insert(0, graph[actuel].Station.Id);
+                actuel = precedents[actuel];
+            }
+
+            if (chemin.Count == 0 || chemin[0] != departId)
+            {
+                Console.WriteLine("Aucun chemin trouvé.");
+                return null;
+            }
+
+            return chemin;
+        }
+
+        int TrouverLigneCommune(int[] lignes1, int[] lignes2)
+        {
+            HashSet<int> set = new HashSet<int>(lignes1);
+            foreach (var l in lignes2)
+            {
+                if (set.Contains(l)) return l;
+            }
+            return -1;
+        }
+
+        public (double[,], int[,]) FloydWarshall()
+        {
+            int n = graph.Length;
+            double[,] dist = new double[n, n];
+            int[,] next = new int[n, n];
+            int[,] lignes = new int[n, n]; // ligne utilisée pour aller de i à j
+
+            //initialisation
+            for (int i = 0; i < n; i++)
+            {
+                for (int j = 0; j < n; j++)
+                {
+                    dist[i, j] = (i == j) ? 0 : double.MaxValue;
+                    next[i, j] = -1;
+                    lignes[i, j] = -1;
+                }
+
+                Noeud<T> noeudU = graph[i];
+                for (int k = 0; k < noeudU.Lien.Length; k++)
+                {
+                    int j = noeudU.Lien[k] - 1;
+                    double poids = noeudU.Poids[k];
+                    int ligneCommune = TrouverLigneCommune(noeudU.Station.Lignes, graph[j].Station.Lignes);
+
+                    dist[i, j] = poids;
+                    next[i, j] = j;
+                    lignes[i, j] = ligneCommune;
+                }
+            }
+
+            // Triple boucle de Floyd-Warshall
+            for (int k = 0; k < n; k++)
+            {
+                for (int i = 0; i < n; i++)
+                {
+                    if (dist[i, k] == double.MaxValue) continue;
+
+                    for (int j = 0; j < n; j++)
+                    {
+                        if (dist[k, j] == double.MaxValue) continue;
+
+                        int ligneIK = lignes[i, k];
+                        int ligneKJ = lignes[k, j];
+
+                        double changement = 0;
+                        if (ligneIK != -1 && ligneKJ != -1 && ligneIK != ligneKJ)
+                        {
+                            changement = 0;
+                        }
+
+                        double nouvelleDistance = dist[i, k] + dist[k, j] + changement;
+
+                        if (nouvelleDistance < dist[i, j])
+                        {
+                            dist[i, j] = nouvelleDistance;
+                            next[i, j] = next[i, k];
+                            lignes[i, j] = ligneIK; // on garde la ligne de départ du chemin
+                        }
+                    }
+                }
+            }
+
+            return (dist, next);
+        }
+
+        public List<int> ReconstituerChemin(int departId, int arriveeId, int[,] next)
+        {
+            int u = departId - 1;
+            int v = arriveeId - 1;
+
+            if (next[u, v] == -1)
+                return null; // aucun chemin possible
+
+            List<int> chemin = new List<int> { departId };
+
+            while (u != v)
+            {
+                u = next[u, v];
+                if (u == -1)
+                    return null;
+
+                chemin.Add(u + 1);
+            }
+
+            return chemin;
+        }
 
         #endregion
+
+
         //Cette méthode permet de générer la matrice d'incidence des stations de métro qui est essentiel pour la suite du projet
         static double[,] MatriceIncidence(string connexion) 
         {
@@ -287,12 +466,13 @@ namespace Livrable2
             return matrice;
         }
 
+        #region VISUALISATION
 
         //Methode permetant de visualiser le graphe
-        public void VisualiserGrapheParCoordonnees()
+        public void VisualiserGraphe()
         {
-            int width = 2400;
-            int height = 2000;
+            int width = 4800;
+            int height = 4000;
             var surface = SKSurface.Create(new SKImageInfo(width, height));
             var canvas = surface.Canvas;
             canvas.Clear(SKColors.White);
@@ -328,7 +508,7 @@ namespace Livrable2
                 }
             }
 
-            // ➕ Définir une palette de couleurs de lignes de métro
+            //Définir une palette de couleurs de lignes de métro
             Dictionary<string, SKColor> ligneCouleurs = new()
             {
                 ["1"] = SKColors.Gold,
@@ -362,7 +542,7 @@ namespace Livrable2
             {
                 var pos = positions[n.Station.Id];
 
-                // 🖌️ Couleur selon la première ligne de la station
+                //Couleur selon la première ligne de la station
                 SKColor couleur = SKColors.DarkGray;
                 if (n.Station.Lignes.Length > 0)
                 {
@@ -374,11 +554,11 @@ namespace Livrable2
                 var nodePaint = new SKPaint { Color = couleur, IsAntialias = true };
                 canvas.DrawCircle(pos, 6, nodePaint);
 
-                // 🏷️ Nom de la station en noir
+                //Nom de la station en noir
                 canvas.DrawText(n.Station.Nom, pos.X, pos.Y - 10, textPaint);
             }
 
-            // 📤 Sauvegarde de l'image
+            //Sauvegarde de l'image
             string filePath = "graphe_paris_colore.png";
             using var image = surface.Snapshot();
             using var data = image.Encode(SKEncodedImageFormat.Png, 100);
@@ -389,6 +569,110 @@ namespace Livrable2
             Process.Start("explorer.exe", filePath);
         }
 
+        public void VisualiserGrapheAvecChemin(List<int> chemin)
+        {
+            int width = 4800;
+            int height = 4000;
+            var surface = SKSurface.Create(new SKImageInfo(width, height));
+            var canvas = surface.Canvas;
+            canvas.Clear(SKColors.White);
+
+            double minLon = graph.Min(n => n.Station.Longitude);
+            double maxLon = graph.Max(n => n.Station.Longitude);
+            double minLat = graph.Min(n => n.Station.Latitude);
+            double maxLat = graph.Max(n => n.Station.Latitude);
+            int margin = 50;
+
+            Dictionary<int, SKPoint> positions = new();
+            foreach (var n in graph)
+            {
+                float x = (float)((n.Station.Longitude - minLon) / (maxLon - minLon) * (width - 2 * margin) + margin);
+                float y = (float)((1 - (n.Station.Latitude - minLat) / (maxLat - minLat)) * (height - 2 * margin) + margin);
+                positions[n.Station.Id] = new SKPoint(x, y);
+            }
+
+            var edgePaint = new SKPaint { Color = SKColors.Gray, StrokeWidth = 1, IsAntialias = true };
+            foreach (var n in graph)
+            {
+                var from = positions[n.Station.Id];
+                foreach (int voisin in n.Lien)
+                {
+                    if (positions.ContainsKey(voisin))
+                    {
+                        var to = positions[voisin];
+                        canvas.DrawLine(from, to, edgePaint);
+                    }
+                }
+            }
+
+            //Lignes du chemin en rouge
+            var cheminPaint = new SKPaint { Color = SKColors.Red, StrokeWidth = 4, IsAntialias = true };
+            for (int i = 0; i < chemin.Count - 1; i++)
+            {
+                int fromId = chemin[i];
+                int toId = chemin[i + 1];
+
+                if (positions.ContainsKey(fromId) && positions.ContainsKey(toId))
+                {
+                    canvas.DrawLine(positions[fromId], positions[toId], cheminPaint);
+                }
+            }
+
+            Dictionary<string, SKColor> ligneCouleurs = new()
+            {
+                ["1"] = SKColors.Gold,
+                ["2"] = SKColors.DeepSkyBlue,
+                ["3"] = SKColors.OliveDrab,
+                ["3bis"] = SKColors.MediumSeaGreen,
+                ["4"] = SKColors.Purple,
+                ["5"] = SKColors.OrangeRed,
+                ["6"] = SKColors.SeaGreen,
+                ["7"] = SKColors.HotPink,
+                ["7bis"] = SKColors.LightBlue,
+                ["8"] = SKColors.MediumSlateBlue,
+                ["9"] = SKColors.Olive,
+                ["10"] = SKColors.DarkGoldenrod,
+                ["11"] = SKColors.DarkOrange,
+                ["12"] = SKColors.ForestGreen,
+                ["13"] = SKColors.DarkTurquoise,
+                ["14"] = SKColors.DarkViolet
+            };
+
+            var textPaint = new SKPaint
+            {
+                Color = SKColors.Black,
+                TextSize = 10,
+                IsAntialias = true,
+                TextAlign = SKTextAlign.Center
+            };
+
+            foreach (var n in graph)
+            {
+                var pos = positions[n.Station.Id];
+                SKColor couleur = SKColors.DarkGray;
+                if (n.Station.Lignes.Length > 0)
+                {
+                    string ligne = n.Station.Lignes[0].ToString();
+                    if (ligneCouleurs.TryGetValue(ligne, out var c))
+                        couleur = c;
+                }
+
+                var nodePaint = new SKPaint { Color = couleur, IsAntialias = true };
+                canvas.DrawCircle(pos, 6, nodePaint);
+                canvas.DrawText(n.Station.Nom, pos.X, pos.Y - 10, textPaint);
+            }
+
+            string filePath = "graphe_chemin_rouge.png";
+            using var image = surface.Snapshot();
+            using var data = image.Encode(SKEncodedImageFormat.Png, 100);
+            using var stream = File.OpenWrite(filePath);
+            data.SaveTo(stream);
+
+            Console.WriteLine($"Graphe avec chemin sauvegardé dans {filePath}");
+            Process.Start("explorer.exe", filePath);
+        }
+
+        #endregion 
     }
 
 }
