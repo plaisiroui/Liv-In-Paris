@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Livrable2
 {
-    internal class Station
+    public class Station
     {
         int id;
         string nom;
