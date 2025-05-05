@@ -5,12 +5,14 @@ using static System.Net.Mime.MediaTypeNames;
 using System.Data;
 using MySql.Data.MySqlClient;
 using Org.BouncyCastle.Crypto.Engines;
+using System.Globalization;
+using System.Threading;
 
 namespace Livrable2
 {
     class Program
     {
-
+       
         /*public static void Main(string[] args)
         {
             string fichier_connexion = "Connexions.txt";
@@ -45,6 +47,10 @@ namespace Livrable2
 
         static void Main()
         {
+            Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
+            Thread.CurrentThread.CurrentUICulture = CultureInfo.InvariantCulture;
+
+
             while (true)
             {
                 Console.WriteLine("===== Menu Principal =====");
@@ -85,8 +91,6 @@ namespace Livrable2
                 }
             }
         }
-
-       
 
 
         #region MODULE CLIENT
@@ -344,7 +348,8 @@ namespace Livrable2
                 Console.WriteLine("4. Afficher les clients servis");
                 Console.WriteLine("5. Afficher les plats réalisés par fréquence");
                 Console.WriteLine("6. Afficher le plat du jour");
-                Console.WriteLine("7. Retour au menu principal");
+                Console.WriteLine("7. Ajouter un plat");
+                Console.WriteLine("8. Retour au menu principal");
                 Console.Write("Choisissez une option: ");
 
                 string choix = Console.ReadLine();
@@ -370,6 +375,10 @@ namespace Livrable2
                         AfficherPlatDuJour();
                         break;
                     case "7":
+                        AjouterPlat();
+                        break;
+
+                    case "8":
                         return;
                     default:
                         Console.WriteLine("Option invalide, veuillez réessayer.");
@@ -647,7 +656,8 @@ namespace Livrable2
                 Console.WriteLine("1. Passer une commande");
                 Console.WriteLine("2. Afficher le prix d’une commande");
                 Console.WriteLine("3. Déterminer le trajet optimal");
-                Console.WriteLine("4. Retourner au Menu principal");
+                Console.WriteLine("4. Modifier une commande");
+                Console.WriteLine("5. Retourner au Menu principal");
                 Console.Write("Choisissez une option : ");
 
                 string choix = Console.ReadLine();
@@ -664,7 +674,9 @@ namespace Livrable2
                         DeterminerTrajetOptimal();
                         break;
                     case "4":
-
+                        ModifierCommande();
+                        break;
+                    case "5":
                         return;
                     default:
                         Console.WriteLine("Option invalide, veuillez réessayer.");
@@ -716,14 +728,14 @@ namespace Livrable2
             Console.Write("Entrez l'ID du cuisinier auquel vous voulez commander : ");
             string idCuisinier = Console.ReadLine();
 
-            int stationArrivee = -1; // Station du client
-            int stationDepart = -1;  // Station du cuisinier
+            int stationArrivee = -1; 
+            int stationDepart = -1;  
 
             using (MySqlConnection connection = new MySqlConnection(connectionString))
             {
                 connection.Open();
 
-
+                // Station client
                 string requeteStationArrive_client = "SELECT StationLaPlusProche FROM Utilisateur WHERE idUtilisateur = '" + idU + "'";
                 using (MySqlCommand commande = new MySqlCommand(requeteStationArrive_client, connection))
                 using (MySqlDataReader reader = commande.ExecuteReader())
@@ -739,7 +751,7 @@ namespace Livrable2
                     }
                 }
 
-
+                // Station cuisinier
                 string requeteStationDepart_cuisinier = "SELECT StationLaPlusProche FROM Utilisateur WHERE idUtilisateur = '" + idCuisinier + "'";
                 using (MySqlCommand commande = new MySqlCommand(requeteStationDepart_cuisinier, connection))
                 using (MySqlDataReader reader = commande.ExecuteReader())
@@ -755,29 +767,68 @@ namespace Livrable2
                     }
                 }
 
+                // Liste des plats proposés par ce cuisinier
+                string requetePlats = "SELECT idPlat, nomPlat, prix FROM Plat WHERE idUtilisateur = '" + idCuisinier + "'";
+                List<string> platsDisponibles = new List<string>();
+                using (MySqlCommand cmd = new MySqlCommand(requetePlats, connection))
+                using (MySqlDataReader reader = cmd.ExecuteReader())
+                {
+                    Console.WriteLine("Plats disponibles :");
+                    while (reader.Read())
+                    {
+                        string idPlat = reader["idPlat"].ToString();
+                        string nomPlat = reader["nomPlat"].ToString();
+                        double prix = Convert.ToDouble(reader["prix"]);
+                        platsDisponibles.Add(idPlat);
+                        Console.WriteLine("- "+idPlat+ " : " +nomPlat+ " ("+prix+" euros)");
+                    }
+                }
 
+                if (platsDisponibles.Count == 0)
+                {
+                    Console.WriteLine("Ce cuisinier n’a pas encore de plat.");
+                    return;
+                }
+
+                Console.Write("Entrez l'ID du plat choisi : ");
+                string idPlatChoisi = Console.ReadLine();
+                if (!platsDisponibles.Contains(idPlatChoisi))
+                {
+                    Console.WriteLine("ID de plat invalide.");
+                    return;
+                }
+
+                
+                double prixCommande = 0;
+                string requetePrix = "SELECT prix FROM Plat WHERE idPlat = '" + idPlatChoisi + "'";
+                using (MySqlCommand cmd = new MySqlCommand(requetePrix, connection))
+                {
+                    prixCommande = Convert.ToDouble(cmd.ExecuteScalar());
+                }
+
+                
                 string idCommande = GenererIDUniqueCommande();
-                // on genere un prix aléatoire entre 10 et 20 euros pour simplifié
-                Random random = new Random();
-                double prix = random.Next(10, 21);
-
                 string statut = "En cours";
 
-                string requeteCommande = "INSERT INTO Commande (idCommande, dateCommande, prix, idStationDepart, idStationArrivee, statut, idUtilisateur ) " +
-                          "VALUES (@idCommande, NOW(), @prix, @stationDepart, @stationArrivee,  @statut, @idU)";
+                string requeteCommande = @"INSERT INTO Commande (idCommande, dateCommande, prix, idStationDepart, idStationArrivee, statut, idUtilisateur, idCuisinier, idPlat) 
+                                   VALUES (@idCommande, NOW(), @prix, @depart, @arrivee, @statut, @client, @cuisinier, @plat)";
                 using (MySqlCommand cmd = new MySqlCommand(requeteCommande, connection))
                 {
                     cmd.Parameters.AddWithValue("@idCommande", idCommande);
-                    cmd.Parameters.AddWithValue("@prix", prix);
-                    cmd.Parameters.AddWithValue("@stationDepart", stationDepart);
-                    cmd.Parameters.AddWithValue("@stationArrivee", stationArrivee);
+                    cmd.Parameters.AddWithValue("@prix", prixCommande);
+                    cmd.Parameters.AddWithValue("@depart", stationDepart);
+                    cmd.Parameters.AddWithValue("@arrivee", stationArrivee);
                     cmd.Parameters.AddWithValue("@statut", statut);
-                    cmd.Parameters.AddWithValue("@idU", idU);
-                    int rAffect = cmd.ExecuteNonQuery();
+                    cmd.Parameters.AddWithValue("@client", idU);
+                    cmd.Parameters.AddWithValue("@cuisinier", idCuisinier);
+                    cmd.Parameters.AddWithValue("@plat", idPlatChoisi);
+                    cmd.ExecuteNonQuery();
                 }
+
                 Console.WriteLine("Commande enregistrée avec succès !");
             }
         }
+
 
 
         public static void AfficherPrixCommande()
@@ -811,15 +862,16 @@ namespace Livrable2
             Console.Write("Entrez le numéro de commande : ");
             string idCommande =Console.ReadLine();
 
+            int stationDepart = -1;
+            int stationArrivee = -1;
             using (MySqlConnection connection = new MySqlConnection(connectionString))
             {
                 connection.Open();
-                // Récupérer les stations de départ et d’arrivée depuis la base de données
-                string requeteStations = "SELECT idStationDepart, idStationArrivee FROM Commande WHERE idCommande = '" + idCommande+"'";
-                int stationDepart = -1;
-                int stationArrivee = -1;
+                
+                string requeteRecupStations = "SELECT idStationDepart, idStationArrivee FROM Commande WHERE idCommande = '" + idCommande+"'";
+               
 
-                using (MySqlCommand commande = new MySqlCommand(requeteStations, connection))
+                using (MySqlCommand commande = new MySqlCommand(requeteRecupStations, connection))
                 using (MySqlDataReader reader = commande.ExecuteReader())
                 {
                     if (reader.Read())
@@ -835,20 +887,47 @@ namespace Livrable2
                 }
 
 
-                // Vérifier que les stations sont valides
                 if (stationDepart == -1 || stationArrivee == -1)
                 {
                     Console.WriteLine("Stations invalides pour cette commande.");
                     return;
                 }
-
-                // Calculer le plus court chemin avec Dijkstra
                 string fichier_connexion = "Connexions.txt";
                 string fichier_StationMetro = "StationsMetro.txt";
                 Graphe<int> g2 = new Graphe<int>(fichier_connexion, fichier_StationMetro);
-                List<int> chemin = g2.Dijkstra(stationDepart, stationArrivee);
 
-                // Affichage du résultat
+                Console.WriteLine("\nChoisissez l'algorithme :");
+                Console.WriteLine("1. Dijkstra");
+                Console.WriteLine("2. Bellman-Ford");
+                Console.WriteLine("3. Floyd-Warshall");
+                Console.Write("Votre choix : ");
+                string choix = Console.ReadLine();
+
+                List<int> chemin = new List<int>();
+
+                switch (choix)
+                {
+                    case "1":
+                        chemin = g2.Dijkstra(stationDepart, stationArrivee);
+                        Console.WriteLine("Algorithme utilisé : Dijkstra");
+                        //Afficher le chemin avec carte
+                        break;
+
+                    case "2":
+                        chemin = g2.BellmanFord(stationDepart, stationArrivee);
+                        Console.WriteLine("Algorithme utilisé : Bellman-Ford");
+                        //Afficher le chemin avec carte
+                        break;
+
+                    case "3":
+                        Console.WriteLine("En cours d'implémentation....");
+                        break;
+
+                    default:
+                        Console.WriteLine("Choix invalide.");
+                        return;
+                }
+
                 Console.WriteLine("Le trajet optimal pour la commande " + idCommande + " est :");
                 Console.Write("Chemin : ");
                 Console.WriteLine(string.Join(" -> ", chemin));
@@ -856,14 +935,173 @@ namespace Livrable2
             }
         }
 
+        public   static void ModifierCommande()
+        {
+            Console.Write("Entrez l'ID de la commande à modifier : ");
+            string idCommande = Console.ReadLine();
+
+            Console.WriteLine("\nQue voulez-vous modifier ?");
+            Console.WriteLine("1. Statut");
+            Console.WriteLine("2. Cuisinier associé");
+            Console.WriteLine("3. Station d’arrivée");
+            Console.WriteLine("4. Prix");
+            Console.WriteLine("5. Plat");
+            Console.Write("Votre choix : ");
+            string choix = Console.ReadLine();
+
+            using (MySqlConnection connection = new MySqlConnection(connectionString))
+            {
+                connection.Open();
+                MySqlCommand cmd = connection.CreateCommand();
+
+                switch (choix)
+                {
+                    case "1":
+                        Console.Write("Nouveau statut (ex: En cours, Validée, Livrée) : ");
+                        string statut = Console.ReadLine();
+                        cmd.CommandText = "UPDATE Commande SET statut = @val WHERE idCommande = @id";
+                        cmd.Parameters.AddWithValue("@val", statut);
+                        break;
+
+                    case "2":
+                        Console.Write("Nouvel ID du cuisinier : ");
+                        string idCuisinier = Console.ReadLine();
+                        cmd.CommandText = "UPDATE Commande SET idCuisinier = @val WHERE idCommande = @id";
+                        cmd.Parameters.AddWithValue("@val", idCuisinier);
+                        break;
+
+                    case "3":
+                        Console.Write("Nouvel ID de station d’arrivée : ");
+                        int idStation = int.Parse(Console.ReadLine());
+                        cmd.CommandText = "UPDATE Commande SET idStationArrivee = @val WHERE idCommande = @id";
+                        cmd.Parameters.AddWithValue("@val", idStation);
+                        break;
+
+                    case "4":
+                        Console.Write("Nouveau prix : ");
+                        double prix = double.Parse(Console.ReadLine());
+                        cmd.CommandText = "UPDATE Commande SET prix = @val WHERE idCommande = @id";
+                        cmd.Parameters.AddWithValue("@val", prix);
+                        break;
+                    case "5":
+                        Console.Write("Nouvel ID du plat : ");
+                        string idPlat = Console.ReadLine();
+                        string requeteVerifPlat = "SELECT COUNT(*) FROM Plat WHERE idPlat = @idPlat";
+                        using (MySqlCommand verifCmd = new MySqlCommand(requeteVerifPlat, connection))
+                        {
+                            verifCmd.Parameters.AddWithValue("@idPlat", idPlat);
+                            int count = Convert.ToInt32(verifCmd.ExecuteScalar());
+                            if (count == 0)
+                            {
+                                Console.WriteLine("Plat introuvable.");
+                                return;
+                            }
+                        }
+
+                        cmd.CommandText = "UPDATE Commande SET idPlat = @val WHERE idCommande = @id";
+                        cmd.Parameters.AddWithValue("@val", idPlat);
+                        break;
+
+
+                    default:
+                        Console.WriteLine("Choix invalide.");
+                        return;
+                }
+
+                cmd.Parameters.AddWithValue("@id", idCommande);
+                int result = cmd.ExecuteNonQuery();
+
+                if (result > 0)
+                    Console.WriteLine("Commande modifiée avec succès.");
+                else
+                    Console.WriteLine("Erreur : commande non trouvée ou non modifiée.");
+            }
+        }
+
+        static string GenererIDUniquePlat()
+        {
+            using (MySqlConnection connection = new MySqlConnection(connectionString))
+            {
+                connection.Open();
+                int numero = 1;
+                while (true)
+                {
+                    string id = "P" + numero.ToString("D3");
+                    string query = "SELECT COUNT(*) FROM Plat WHERE idPlat = @id";
+                    using (MySqlCommand cmd = new MySqlCommand(query, connection))
+                    {
+                        cmd.Parameters.AddWithValue("@id", id);
+                        int count = Convert.ToInt32(cmd.ExecuteScalar());
+                        if (count == 0)
+                        {
+                            return id;
+                        }
+                    }
+                    numero++;
+                }
+            }
+        }
+
+
+        static void AjouterPlat()
+        {
+            Console.Write("ID du cuisinier : ");
+            string idCuisinier = Console.ReadLine();
+            Console.Write("Nom du plat : ");
+            string nom = Console.ReadLine();
+            Console.Write("Type de plat (Entrée / Plat principal / Dessert) : ");
+            string type = Console.ReadLine();
+            Console.Write("Nombre de personnes : ");
+            int nbPers = int.Parse(Console.ReadLine());
+            Console.Write("Prix par personne : ");
+            double prix = double.Parse(Console.ReadLine());
+            Console.Write("Nationalité : ");
+            string nat = Console.ReadLine();
+            Console.Write("Régime alimentaire (ex: Végétarien, Halal...) : ");
+            string regime = Console.ReadLine();
+            Console.Write("Date de fabrication (YYYY-MM-DD) : ");
+            DateTime dateFab = DateTime.Parse(Console.ReadLine());
+            Console.Write("Date de péremption (YYYY-MM-DD) : ");
+            DateTime datePer = DateTime.Parse(Console.ReadLine());
+            Console.Write("ID de recette (ou une valeur fictive ex: R001 si non utilisé) : ");
+            string idRecette = Console.ReadLine();
+            Console.Write("Le plat est-il le plat du jour ? (Oui/Non) : ");
+            bool platDuJour = Console.ReadLine().Trim().ToUpper() == "OUI";
+
+            string idPlat = GenererIDUniquePlat();
+
+
+            using (MySqlConnection conn = new MySqlConnection(connectionString))
+            {
+                conn.Open();
+                string requete = @"INSERT INTO Plat (idPlat, idUtilisateur, nomPlat, typePlat, nbPersonne, dateFabrication, datePeremption, prix, nationalite, regAlimentaire, idRecette, platDuJour) 
+                           VALUES (@idPlat, @idUtilisateur, @nomPlat, @typePlat, @nbPers, @dateFab, @datePer, @prix, @nat, @regime, @idRecette, @platDuJour)";
+                using (MySqlCommand cmd = new MySqlCommand(requete, conn))
+                {
+                    cmd.Parameters.AddWithValue("@idPlat", idPlat);
+                    cmd.Parameters.AddWithValue("@idUtilisateur", idCuisinier);
+                    cmd.Parameters.AddWithValue("@nomPlat", nom);
+                    cmd.Parameters.AddWithValue("@typePlat", type);
+                    cmd.Parameters.AddWithValue("@nbPers", nbPers);
+                    cmd.Parameters.AddWithValue("@dateFab", dateFab);
+                    cmd.Parameters.AddWithValue("@datePer", datePer);
+                    cmd.Parameters.AddWithValue("@prix", prix);
+                    cmd.Parameters.AddWithValue("@nat", nat);
+                    cmd.Parameters.AddWithValue("@regime", regime);
+                    cmd.Parameters.AddWithValue("@idRecette", idRecette);
+                    cmd.Parameters.AddWithValue("@platDuJour", platDuJour);
+                    cmd.ExecuteNonQuery();
+                }
+            }
+
+            Console.WriteLine("Plat ajouté avec succès !");
+        }
+
 
 
 
 
         #endregion
-
-
-
 
         #region MODULE STATISTIQUE 
 
