@@ -64,6 +64,9 @@ namespace Livrable2
 
 
         #region MODULE CLIENT
+        /// <summary>
+        /// sous menu pour gérer les opérations liées aux client (ajout, suppression etc...)
+        /// </summary>
         static void ModuleClient()
         {
             while (true)
@@ -130,7 +133,10 @@ namespace Livrable2
                 }
             }
         }
-
+        /// <summary>
+        /// Demande les informations d'un nouveau client à l'utilisateur, génère un idUnique
+        /// puis insère ces données dans les tables Utilisateur et Client de la BDD
+        /// </summary>
         static void AjouterClient()
         {
             Console.WriteLine("\n=== AJOUT D'UN NOUVEAU CLIENT ===");
@@ -200,6 +206,9 @@ namespace Livrable2
             Console.WriteLine("Client ajouté avec succès.");
         }
 
+        /// <summary>
+        /// Supprime un client et toutes ses données associées des autres tables.
+        /// </summary>
         static void SupprimerClient()
         {
 
@@ -217,13 +226,13 @@ namespace Livrable2
             {
                 connection.Open();
                 string[] listRequete = {
-    "DELETE FROM Contenir WHERE idCommande IN (SELECT idCommande FROM Commande WHERE idUtilisateur = @id)",
-    "DELETE FROM Livraison WHERE idCommande IN (SELECT idCommande FROM Commande WHERE idUtilisateur = @id)",
-    "DELETE FROM Evaluation WHERE idEvaluateur = @id",
-    "DELETE FROM Evaluation WHERE idEvalue = @id",
-    "DELETE FROM Commande WHERE idUtilisateur = @id",
-    "DELETE FROM Client WHERE idUtilisateur = @id",
-    "DELETE FROM Utilisateur WHERE idUtilisateur = @id"
+                     "DELETE FROM Contenir WHERE idCommande IN (SELECT idCommande FROM Commande WHERE idUtilisateur = @id)",
+                     "DELETE FROM Livraison WHERE idCommande IN (SELECT idCommande FROM Commande WHERE idUtilisateur = @id)",
+                     "DELETE FROM Evaluation WHERE idEvaluateur = @id",
+                     "DELETE FROM Evaluation WHERE idEvalue = @id",
+                     "DELETE FROM Commande WHERE idUtilisateur = @id",
+                      "DELETE FROM Client WHERE idUtilisateur = @id",
+                      "DELETE FROM Utilisateur WHERE idUtilisateur = @id"
 };
                 foreach (string requete in listRequete)
                 {
@@ -237,6 +246,10 @@ namespace Livrable2
             Console.WriteLine("Client supprimé avec succès.");
         }
 
+        /// <summary>
+        /// Permet de modifier les infos perso d'un client déjà existant 
+        /// -> met à jour les tables Utilisateurs et Client
+        /// </summary>
         static void ModifierClient()
         {
 
@@ -305,7 +318,9 @@ namespace Livrable2
             }
             Console.WriteLine("Client modifié avec succès !");
         }
-
+        /// <summary>
+        /// Affiche liste des clients triée comme c'est demandé sru le cahier des charges
+        /// </summary>
         static void AfficherClients()
         {
 
@@ -346,6 +361,9 @@ namespace Livrable2
         #endregion
 
         #region MODULE CUISINIER
+        /// <summary>
+        /// Sous menu pour gérer les opérations liées aux cuisiniers
+        /// </summary>
         static void ModuleCuisinier()
         {
             while (true)
@@ -395,7 +413,10 @@ namespace Livrable2
                 }
             }
         }
-
+        /// <summary>
+        /// Ajoute un nouveau cuisinier en demande les infos a l'utilisateur
+        /// puis insère les données dans les tables Utilisateur et Cuisinier
+        /// </summary>
         static void AjouterCuisinier()
         {
             Console.WriteLine("\n=== AJOUT D'UN NOUVEAU CUISINIER ===");
@@ -463,7 +484,10 @@ namespace Livrable2
             }
             Console.WriteLine("Cuisinier ajouté avec succès.");
         }
-
+        /// <summary>
+        /// Permet de modifier les infos d'un cuisinier dèjà existant
+        /// puis met a jour les tables utilisateur et Cuisinier
+        /// </summary>
         static void ModifierCuisinier()
         {
 
@@ -534,7 +558,9 @@ namespace Livrable2
 
 
         }
-
+        /// <summary>
+        /// Supprimee un cuisinier et toutes ses données associées
+        /// </summary>
         static void SupprimerCuisinier()
         {
 
@@ -575,7 +601,10 @@ namespace Livrable2
             }
             Console.WriteLine("Cuisinier supprimé avec succès.");
         }
-
+        /// <summary>
+        /// Affiche la liste des clients ayant été servis par un cuisinier donné
+        /// possibilité de filtrer par période
+        /// </summary>
         static void AfficherClientsServis()
         {
             Console.Write("ID du cuisinier : ");
@@ -643,7 +672,9 @@ namespace Livrable2
                 }
             }
         }
-
+        /// <summary>
+        /// Affiche les plats réalisés par un cuisinier, trés par fréquence de commande
+        /// </summary>
         static void AfficherPlatsParFrequence()
         {
             Console.Write("ID du cuisinier (Tapez A d'abord pour afficher les cuisiniers ");
@@ -672,7 +703,9 @@ namespace Livrable2
                 }
             }
         }
-
+        /// <summary>
+        /// Affiche le nom plat du jour s'il existe
+        /// </summary>
         static void AfficherPlatDuJour()
         {
             string requetePlatJ = "SELECT nom FROM Plat WHERE platDuJour = 1";
@@ -692,7 +725,9 @@ namespace Livrable2
                 }
             }
         }
-
+/// <summary>
+/// Affiche la liste des cuisiniers
+/// </summary>
         static void AfficherCuisiniers()
         {
             Console.WriteLine("\n=== LISTE DES CUISINIERS ===");
@@ -727,7 +762,9 @@ namespace Livrable2
         #endregion
 
         #region MODULE COMMANDE
-
+        /// <summary>
+        /// Menu des opérations sur les commandes
+        /// </summary>
         public static void ModuleCommande()
         {
 
@@ -767,7 +804,10 @@ namespace Livrable2
             }
         }
 
-
+        /// <summary>
+        /// Génère un id unique pour une nouvelle commande
+        /// </summary>
+        /// <returns>un id unique sous la forme "C" + 3 chiffres (par exemple "C001")</returns>
         static string GenererIDUniqueCommande()
         {
             using (MySqlConnection connection = new MySqlConnection(connectionString))
@@ -791,7 +831,10 @@ namespace Livrable2
                 }
             }
         }
-
+        /// <summary>
+        /// Permert à un client de passer une commande en sélectionnant un cuisinier et un plat
+        /// Enregistre la commande dans las BDD
+        /// </summary>
         public static void PasserCommande()
         {
             Console.Write("Êtes-vous client ? (Oui/Non) : ");
@@ -849,7 +892,7 @@ namespace Livrable2
                     }
                 }
 
-                // Liste des plats proposés par ce cuisinier
+                
                 string requetePlats = "SELECT idPlat, nomPlat, prix FROM Plat WHERE idUtilisateur = '" + idCuisinier + "'";
                 List<string> platsDisponibles = new List<string>();
                 using (MySqlCommand cmd = new MySqlCommand(requetePlats, connection))
@@ -912,7 +955,9 @@ namespace Livrable2
         }
 
 
-
+        /// <summary>
+        /// Affiche prux d'une commande
+        /// </summary>
         public static void AfficherPrixCommande()
         {
             Console.Write("Entrez l'id de la commande : ");
@@ -938,7 +983,11 @@ namespace Livrable2
             }
         }
 
-
+        /// <summary>
+        /// Détermine et affiche le plus court chemin entre la station du cuisinier et celle du client
+        /// pour une commande
+        /// En utilisant un algorithme que l'on peu choisir (Dijkstra, Bellman-Ford ou Floyd-Warshall).
+        /// </summary>
         public static void DeterminerTrajetOptimal()
         {
             Console.Write("Entrez le numéro de commande : ");
@@ -1019,7 +1068,9 @@ namespace Livrable2
                 Console.WriteLine("Temps estimé : " + g2.CalculerTempsChemin(chemin) + " minutes.");
             }
         }
-
+        /// <summary>
+        /// Modifie les infos d'une commande
+        /// </summary>
         public static void ModifierCommande()
         {
             Console.Write("Entrez l'ID de la commande à modifier : ");
@@ -1102,7 +1153,10 @@ namespace Livrable2
                     Console.WriteLine("Erreur : commande non trouvée ou non modifiée.");
             }
         }
-
+        /// <summary>
+        /// Génère un id unique pour un plat
+        /// </summary>
+        /// <returns> un id unique sous la forme "P" suivi de 3 chiffre (ex:"P001")</returns>
         static string GenererIDUniquePlat()
         {
             using (MySqlConnection connection = new MySqlConnection(connectionString))
@@ -1127,7 +1181,9 @@ namespace Livrable2
             }
         }
 
-
+        /// <summary>
+        ///¨Permet à un cuisinier d'ajouter un nouveau plat avec toutes les infos de celui ci
+        /// </summary>
         static void AjouterPlat()
         {
             Console.Write("ID du cuisinier : ");
@@ -1189,7 +1245,7 @@ namespace Livrable2
         #endregion
 
         #region MODULE STATISTIQUE 
-
+        
         static void ModuleStatistique()
         {
             while (true)
@@ -1230,7 +1286,9 @@ namespace Livrable2
                 }
             }
         }
-
+        /// <summary>
+        /// Affiche le nombre total de livraisons effectuées par chaque cuisinier
+        /// </summary>
         static void AfficherNombreLivraisonsParCuisinier()
         {
             using (MySqlConnection connection = new MySqlConnection(connectionString))
@@ -1253,7 +1311,9 @@ namespace Livrable2
                 }
             }
         }
-
+        /// <summary>
+        /// Affiche les commandes passées entre deux dates que l'utilisateur saisies
+        /// </summary>
         static void AfficherCommandesParPeriode()
         {
             Console.Write("Date de début (YYYY-MM-DD) : ");
@@ -1283,7 +1343,9 @@ namespace Livrable2
                 }
             }
         }
-
+        /// <summary>
+        /// affiche la moyenne des pric de toutes les commandes de la BDD
+        /// </summary>
         static void AfficherMoyennePrixCommandes()
         {
             using (MySqlConnection connection = new MySqlConnection(connectionString))
@@ -1299,7 +1361,9 @@ namespace Livrable2
                 }
             }
         }
-
+        /// <summary>
+        /// Affiche la moyenne des soldes des comptes clients 
+        /// </summary>
         static void AfficherMoyenneComptesClients()
         {
             using (MySqlConnection connection = new MySqlConnection(connectionString))
@@ -1315,7 +1379,10 @@ namespace Livrable2
                 }
             }
         }
-
+        /// <summary>
+        /// Affiche les commandes de plats correspondant à une nationalité donnée
+        /// et^passées dans une période définie
+        /// </summary>
         static void AfficherCommandesParNationaliteEtPeriode()
         {
             Console.Write("Nationalité des plats (ex: Français, Italien) : ");
@@ -1358,7 +1425,10 @@ namespace Livrable2
 
 
         #region MODULE AUTRE
-
+        /// <summary>
+        /// Menu avec des reuêtes diverses
+        /// +les requetes avec Having , group by etc....
+        /// </summary>
         public static void ModuleAutre()
         {
             Console.WriteLine("\n=== MODULE AUTRE ===");
@@ -1414,7 +1484,9 @@ namespace Livrable2
                     break;
             }
         }
-
+        /// <summary>
+        /// Affiche la liste des stations de métro contenues dans le graphe
+        /// </summary>
         public static void AfficherStations()
         {
             string fichier_connexion = "Connexions.txt";
@@ -1431,7 +1503,9 @@ namespace Livrable2
                 Console.WriteLine();
             }
         }
-
+        /// <summary>
+        /// Affiche les détails de la derniere commande passée, triée par date decroissante
+        /// </summary>
         public static void AfficherDerniereCommande()
         {
             using (MySqlConnection connection = new MySqlConnection(connectionString))
@@ -1459,7 +1533,9 @@ namespace Livrable2
                 reader.Close();
             }
         }
-
+        /// <summary>
+        /// Calcule et affiche le prix moyen de toutes les commandes
+        /// </summary>
         public static void AfficherPrixMoyenCommandes()
         {
             using (MySqlConnection connection = new MySqlConnection(connectionString))
@@ -1482,6 +1558,9 @@ namespace Livrable2
             }
         }
 
+        /// <summary>
+        /// Affiche les clients ayant passé + de X commandes (X tapé par l'utilisateur au 
+        /// </summary>
         public static void AfficherClientsCommandesXfois()
         {
             Console.Write("Entrez le nombre minimum de commandes à afficher (X) : ");
@@ -1505,7 +1584,9 @@ namespace Livrable2
                 reader.Close();
             }
         }
-
+        /// <summary>
+        /// Affiche le nbr total de plats différents ayant été commandés
+        /// </summary>
         public static void AfficherNombrePlatsDifferentsCommandes()
         {
             using (MySqlConnection connection = new MySqlConnection(connectionString))
@@ -1527,7 +1608,9 @@ namespace Livrable2
                 }
             }
         }
-
+        /// <summary>
+        /// Affiche les clients ayant passé plus de deux commandes
+        /// </summary>
         static void RequeteGroupByHaving()
         {
             using var conn = new MySqlConnection(connectionString);
@@ -1544,7 +1627,9 @@ namespace Livrable2
                 Console.WriteLine("Client " + reader["idUtilisateur"] + " => " + reader["nbCommandes"] + " commandes");
             }
         }
-
+        /// <summary>
+        /// Affiche les utilisateurs qui n'ont jamais passé de commande
+        /// </summary>
         static void RequeteLeftJoin()
         {
             using var conn = new MySqlConnection(connectionString);
@@ -1563,7 +1648,9 @@ namespace Livrable2
                 Console.WriteLine(reader["idUtilisateur"] + " – " + reader["nom"] + " " + reader["prenom"]);
             }
         }
-
+        /// <summary>
+        /// Affiche les plats dont le prix est supérieur à au moins un plat du cuisinier sélectionné
+        /// </summary>
         static void RequeteAny()
         {
             Console.Write("Entrez l’ID du cuisinier à comparer (Tapez A pour voir les cuisiniers) : ");
@@ -1592,7 +1679,9 @@ namespace Livrable2
                 Console.WriteLine(reader["idPlat"] + " – " + reader["nomPlat"] + " (" + reader["prix"] + " eruos)");
             }
         }
-
+        /// <summary>
+        /// Affiche les plats dont le prix est supérieur à tous les plats d'un cuisinier
+        /// </summary>
         static void RequeteAll()
         {
             Console.Write("Entrez l’ID du cuisinier à comparer (Tapez A pour voir les cuisiniers) : ");
@@ -1620,7 +1709,9 @@ namespace Livrable2
                 Console.WriteLine(reader["idPlat"] + " – " + reader["nomPlat"] + " (" + reader["prix"] + " eruos)");
             }
         }
-
+        /// <summary>
+        /// Affiche les cuisiniers ayant au moins un plat 
+        /// </summary>
         static void RequeteExists()
         {
             using var conn = new MySqlConnection(connectionString);
