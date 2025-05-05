@@ -13,11 +13,17 @@ namespace Livrable2
         {
             get { return graph; }
         }
+
+        /// <summary>
+        /// Permet de construire un graph avec les fichiers connexions et stations
+        /// </summary>
+        /// <param name="connexions">Fichier contenant les connexions entre stations</param>
+        /// <param name="stations">Fichier contenant toutes les stations</param>
         public Graphe(string connexions, string stations)
         {
-            double[,] matrice = MatriceIncidence(connexions); ///On génère la martrice d'incidence qui est essentielle pour la suite 
+            double[,] matrice = MatriceIncidence(connexions);  
 
-            Noeud<T>[] graph = new Noeud<T>[matrice.GetLength(0)];  ///On génère une liste de noeud qui va pour chaque station, répertorier ses liens avec les autres
+            Noeud<T>[] graph = new Noeud<T>[matrice.GetLength(0)]; 
             for (int p = 1; p <= matrice.GetLength(0); p++)
             {
                 graph[p-1] = new Noeud<T>(p, matrice, stations);
@@ -25,10 +31,14 @@ namespace Livrable2
             this.graph = graph;
         }
 
-        ///Permet de convertir le nom d'une station en son identifiant
+        /// <summary>
+        /// Convertis le nom d'une station en son identifiant 
+        /// </summary>
+        /// <param name="nom"></param>
+        /// <returns>L'identifiant de nom</returns>
         public int NomAIdentifiant(string nom)
         {
-            int result = 0;
+            int result = -1;
             for (int i = 0; i < graph.Length; i++)
             {
                 if (nom == graph[i].Station.Nom)
@@ -39,20 +49,24 @@ namespace Livrable2
             return result;
         }
 
-        ///Cette méthode permet de générer la matrice d'incidence des stations de métro qui est essentiel pour la suite du projet
+        /// <summary>
+        /// Cette méthode permet de générer la matrice d'incidence des stations de métro qui est essentiel pour la suite du projet
+        /// </summary>
+        /// <param name="connexion">Fichier contenant les connexions entre stations</param>
+        /// <returns>La matrice qui associe pour chaque station de métro ces liens avec les autres</returns>
         static double[,] MatriceIncidence(string connexion)
         {
-            double[] m = Array.ConvertAll(File.ReadAllText(connexion) ///On sépare les nombres
+            double[] m = Array.ConvertAll(File.ReadAllText(connexion) 
                 .Split(new[] { ';', '\n' }, StringSplitOptions.RemoveEmptyEntries), double.Parse);
             double[,] matrice = new double[Convert.ToInt32(m[0]), Convert.ToInt32(m[1])];
-            for (int i = 0; i < matrice.GetLength(0); i++) ///On initialise la matrice comme étant nulle
+            for (int i = 0; i < matrice.GetLength(0); i++)
             {
                 for (int j = 0; j < matrice.GetLength(1); j++)
                 {
                     matrice[i, j] = 0;
                 }
             }
-            for (int i = 2; i < m.Length; i += 4) ///On modifie la matrice aux endroits ou il y a une liaison
+            for (int i = 2; i < m.Length; i += 4) 
             {
                 if (matrice[Convert.ToInt32(m[i] - 1), Convert.ToInt32(m[i + 1] - 1)] == 0)
                 {
@@ -66,22 +80,26 @@ namespace Livrable2
             return matrice;
         }
 
-        ///Vérifie si le graphe contient un cycle
+        /// <summary>
+        /// Vérifie si le graphe contient un cycle
+        /// </summary>
+        /// <param name="graphe">Graphe sous forme de tableau de noeuds</param>
+        /// <returns>True si un cycle est détecté</returns>
         static bool ContientCycle(Noeud<T>[] graphe)
         {
-            List<int> visite = new List<int>(); /// Liste des nœuds déjà visités
-            List<int> parent = new List<int>(new int[graphe.Length]); /// Liste des parents pour suivre la relation parent-enfant
+            List<int> visite = new List<int>(); 
+            List<int> parent = new List<int>(new int[graphe.Length]); 
 
             for (int i = 0; i < graphe.Length; i++)
             {
                 parent[i] = -1;
             }
 
-            List<int> aVisiter = new List<int>(); ///Liste utilisée comme pile pour le parcours en profondeur
+            List<int> aVisiter = new List<int>(); 
 
             foreach (Noeud<T> noeud in graphe)
             {
-                if (!visite.Contains(noeud.Station.Id)) ///Vérifie si le nœud n'a pas été visité
+                if (!visite.Contains(noeud.Station.Id)) 
                 {
                     aVisiter.Add(noeud.Station.Id);
 
@@ -97,12 +115,12 @@ namespace Livrable2
 
                         foreach (int voisin in graphe[actuel].Lien)
                         {
-                            if (!visite.Contains(voisin)) ///si le voisin n'est pas visité, l'ajouter à visiter
+                            if (!visite.Contains(voisin)) 
                             {
                                 aVisiter.Add(voisin);
                                 parent[voisin] = actuel;
                             }
-                            else if (parent[actuel] != voisin) ///si le voisin est déjà visité et n'est pas le parent, cycle détecté
+                            else if (parent[actuel] != voisin) 
                             {
                                 return true;
                             }
@@ -114,10 +132,14 @@ namespace Livrable2
         }
 
 
-        ///Vérifie si le graphe est bien connexe
+        /// <summary>
+        /// Vérifie si le graphe est bien connexe
+        /// </summary>
+        /// <param name="graphe">Graphe sous forme de tableau de noeuds</param>
+        /// <returns>True si le graphe est connexe</returns>
         static bool EstConnexe(Noeud<T>[] graphe)
         {
-            bool result = false;    ///Si le graphe est connexe, alors le degré d'un graphe doit être égal au nombre de sommets visité par le parcours en largeur
+            bool result = false;  
             if (graphe.Length == ParcoursLargeur(graphe, graphe[0].Station.Id).Length)
             {
                 result = true;
@@ -127,12 +149,18 @@ namespace Livrable2
 
 
         #region PARCOURS DE GRAPHE
-        ///Parcours en largeur sur le graphe à partir d'un identifiant de station
+
+        /// <summary>
+        /// Effectue un parcours en profondeur depuis un identifiant de station.
+        /// </summary>
+        /// <param name="graph">Graphe à parcourir</param>
+        /// <param name="id">Identifiant de la station de départ</param>
+        /// <returns>Liste des stations visitées</returns>
         static int[] ParcoursProfondeur(Noeud<T>[] graph, int id)
         {
-            List<int> resultat = new List<int>(); /// Liste pour stocker le parcours des nœuds visités
-            List<int> visite = new List<int>(); /// Liste pour suivre les nœuds déjà visités
-            List<int> pile = new List<int>(); ///Liste utilisée comme une pile pour le parcours en profondeur
+            List<int> resultat = new List<int>(); 
+            List<int> visite = new List<int>(); 
+            List<int> pile = new List<int>(); 
 
             pile.Add(id);
             while (pile.Count > 0)
@@ -140,16 +168,16 @@ namespace Livrable2
                 int noeudActuel = pile[pile.Count - 1];
                 pile.RemoveAt(pile.Count - 1);
 
-                if (!visite.Contains(noeudActuel)) /// Vérifie si le nœud n'a pas encore été visité
+                if (!visite.Contains(noeudActuel)) 
                 {
-                    visite.Add(noeudActuel); /// Marque le nœud comme visité
+                    visite.Add(noeudActuel); 
                     resultat.Add(noeudActuel);
 
-                    ///Ajoute les voisins du nœud actuel à la pile pour exploration
+                    
                     for (int i = graph[noeudActuel].Lien.Length - 1; i >= 0; i--)
                     {
                         int voisin = graph[noeudActuel].Lien[i];
-                        if (!visite.Contains(voisin)) /// Ajoute seulement les nœuds non visités
+                        if (!visite.Contains(voisin))
                         {
                             pile.Add(voisin);
                         }
@@ -160,16 +188,21 @@ namespace Livrable2
         }
 
 
-        ///Parcours en largeur sur le graphe à partir d'un identifiant de station
+        /// <summary>
+        /// Effectue un parcours en largeur depuis un identifiant de station
+        /// </summary>
+        /// <param name="graph">Graphe à parcourir</param>
+        /// <param name="id">Identifiant de la station de départ</param>
+        /// <returns>Liste des stations visitées</returns>
         static int[] ParcoursLargeur(Noeud<T>[] graph, int id)
         {
-            ///On construit la list du parcour en largeur du graphe
+            
             List<int> parcours = new List<int>();
-            parcours.Add(id);                              ///On ajoute le sommet de départ, 
-            for (int i = 0; i < parcours.Count; i++)          ///puis on ajoute les sommet adjacents au premier sommet
+            parcours.Add(id);                              
+            for (int i = 0; i < parcours.Count; i++)          
             {
                 for (int j = 0; j < graph[parcours[i]-1].Lien.Length; j++)
-                {   ///Si le sommet est deja présent dans la liste, alors on ne l'ajoute pas dans la liste
+                {   
                     if (!parcours.Contains(graph[parcours[i]-1].Lien[j]))
                     {
                         parcours.Add(graph[parcours[i]-1].Lien[j]);
@@ -184,8 +217,14 @@ namespace Livrable2
 
         #region PLUS COURT CHEMIN
 
-        public List<int> PlusCourtChemin(int departId, int arriveeId) ///On va comprarer les trois algorithme pour savoir quel 
-        {                                                             ///chemin est le plus court (les trois donnent le même normalement)
+        /// <summary>
+        /// Détermine le plus court chemin entre deux stations en comparant Dijkstra, Bellman-Ford et Floyd-Warshall
+        /// </summary>
+        /// <param name="departId">Identifiant de la station de départ</param>
+        /// <param name="arriveeId">Identifiant de la station d’arrivée</param>
+        /// <returns>Liste des stations représentant le plus court chemin</returns>
+        public List<int> PlusCourtChemin(int departId, int arriveeId) 
+        {                                                             
             List<int> result = null;
             List<int> c1 = Dijkstra(departId, arriveeId);
             List<int> c2 = BellmanFord(departId, arriveeId);
@@ -211,6 +250,11 @@ namespace Livrable2
             return result;
         }
 
+        /// <summary>
+        /// Calcule le temps estimé pour un chemin donné.
+        /// </summary>
+        /// <param name="chemin">Liste des identifiants de stations du chemin.</param>
+        /// <returns>Temps total en minutes.</returns>
         public double CalculerTempsChemin(List<int> chemin)
         {
             double tempsTotal = 0;
@@ -258,20 +302,22 @@ namespace Livrable2
             return tempsTotal;
         }
 
+        /// <summary>
+        /// Applique l'algorithme de Dijkstra pour trouver le chemin le plus court.
+        /// </summary>
+        /// <param name="departId">Identifiant de départ.</param>
+        /// <param name="arriveeId">Identifiant d’arrivée.</param>
+        /// <returns>Liste du chemin le plus court.</returns>
         public List<int> Dijkstra(int departId, int arriveeId)
         {
             int n = graph.Length;
 
-            ///Tableau pour stocker les distances minimales depuis la station de départ
             double[] distances = new double[n];
 
-            ///Tableau pour stocker les prédécesseurs
             int[] precedents = new int[n];
 
-            ///tableau pour marquer les stations déjà visitées
             bool[] visite = new bool[n];
 
-            ///initialisation des tableaux
             for (int i = 0; i < n; i++)
             {
                 distances[i] = double.MaxValue;  
@@ -281,7 +327,6 @@ namespace Livrable2
 
             distances[departId - 1] = 0;
 
-            ///programme principal
             for (int i = 0; i < n; i++)
             {
                 int u = -1;
@@ -296,20 +341,17 @@ namespace Livrable2
                     }
                 }
 
-                ///si aucune station accessible trouvée, on arrête
                 if (u == -1)
                     break;
 
                 visite[u] = true;
 
-                ///Pour chaque voisin de la station u
                 Noeud<T> noeudActuel = graph[u];
                 for (int k = 0; k < noeudActuel.Lien.Length; k++)
                 {
                     int v = noeudActuel.Lien[k] - 1;      
                     double poids = noeudActuel.Poids[k];  
 
-                    /// Si une meilleure distance est trouvée vers v via u
                     if (!visite[v] && distances[u] + poids < distances[v])
                     {
                         distances[v] = distances[u] + poids;
@@ -318,7 +360,6 @@ namespace Livrable2
                 }
             }
 
-            ///reconstruction du chemin
             List<int> chemin = new List<int>();
             int actuel = arriveeId - 1;
 
@@ -328,7 +369,6 @@ namespace Livrable2
                 actuel = precedents[actuel];
             }
 
-            ///on vérifie que il y a bien un chemin
             if (chemin.Count == 0 || chemin[0] != departId)
             {
                 Console.WriteLine("Aucun chemin trouvé.");
@@ -338,6 +378,12 @@ namespace Livrable2
             return chemin;
         }
 
+        /// <summary>
+        /// Applique l'algorithme de Bellman-Ford pour trouver le chemin le plus court.
+        /// </summary>
+        /// <param name="departId">Identifiant de départ.</param>
+        /// <param name="arriveeId">Identifiant d’arrivée.</param>
+        /// <returns>Chemin le plus court.</returns>
         public List<int> BellmanFord(int departId, int arriveeId)
         {
             int n = graph.Length;
@@ -345,7 +391,6 @@ namespace Livrable2
             double[] distances = new double[n];
             int[] precedents = new int[n];
 
-            ///Initialisation
             for (int i = 0; i < n; i++)
             {
                 distances[i] = double.MaxValue;
@@ -354,7 +399,6 @@ namespace Livrable2
 
             distances[departId - 1] = 0;
 
-            /// Boucle de relaxation |n-1| fois
             for (int i = 0; i < n - 1; i++)
             {
                 foreach (var noeud in graph)
@@ -375,7 +419,6 @@ namespace Livrable2
                 }
             }
 
-            ///Reconstruction du chemin
             List<int> chemin = new List<int>();
             int actuel = arriveeId - 1;
 
@@ -404,12 +447,16 @@ namespace Livrable2
             return -1;
         }
 
+        /// <summary>
+        /// Applique l'algorithme de Floyd-Warshall pour pré-calculer les distances minimales entre toutes les paires de sommets.
+        /// </summary>
+        /// <returns>Tuple contenant les matrices des distances et des successeurs.</returns>
         public (double[,], int[,]) FloydWarshall()
         {
             int n = graph.Length;
             double[,] dist = new double[n, n];
             int[,] next = new int[n, n];
-            int[,] lignes = new int[n, n]; /// ligne utilisée pour aller de i à j
+            int[,] lignes = new int[n, n]; 
 
             ///initialisation
             for (int i = 0; i < n; i++)
@@ -434,7 +481,7 @@ namespace Livrable2
                 }
             }
 
-            ///Triple boucle de Floyd-Warshall
+            
             for (int k = 0; k < n; k++)
             {
                 for (int i = 0; i < n; i++)
@@ -460,7 +507,7 @@ namespace Livrable2
                         {
                             dist[i, j] = nouvelleDistance;
                             next[i, j] = next[i, k];
-                            lignes[i, j] = ligneIK; ///on garde la ligne de départ du chemin
+                            lignes[i, j] = ligneIK; 
                         }
                     }
                 }
@@ -469,13 +516,20 @@ namespace Livrable2
             return (dist, next);
         }
 
+        /// <summary>
+        /// Reconstitue un chemin à partir de la matrice de successeurs de Floyd-Warshall.
+        /// </summary>
+        /// <param name="departId">Identifiant de départ.</param>
+        /// <param name="arriveeId">Identifiant d’arrivée.</param>
+        /// <param name="next">Matrice des successeurs.</param>
+        /// <returns>Chemin reconstitué.</returns>
         public List<int> ReconstituerChemin(int departId, int arriveeId, int[,] next)
         {
             int u = departId - 1;
             int v = arriveeId - 1;
 
             if (next[u, v] == -1)
-                return null; /// aucun chemin possible
+                return null; 
 
             List<int> chemin = new List<int> { departId };
 
@@ -496,7 +550,9 @@ namespace Livrable2
 
         #region VISUALISATION
 
-        ///Methode permetant de visualiser le graphe
+        /// <summary>
+        /// Génère et sauvegarde une image du graphe avec les stations et leurs connexions
+        /// </summary>
         public void VisualiserGraphe()
         {
             int width = 4800;
@@ -505,14 +561,13 @@ namespace Livrable2
             var canvas = surface.Canvas;
             canvas.Clear(SKColors.White);
 
-            /// Min/max pour normalisation
             double minLon = graph.Min(n => n.Station.Longitude);
             double maxLon = graph.Max(n => n.Station.Longitude);
             double minLat = graph.Min(n => n.Station.Latitude);
             double maxLat = graph.Max(n => n.Station.Latitude);
             int margin = 50;
 
-            /// Coordonnées normalisées
+            
             Dictionary<int, SKPoint> positions = new();
             foreach (var n in graph)
             {
@@ -521,7 +576,7 @@ namespace Livrable2
                 positions[n.Station.Id] = new SKPoint(x, y);
             }
 
-            /// Arêtes (liens)
+            
             var edgePaint = new SKPaint { Color = SKColors.Gray, StrokeWidth = 1, IsAntialias = true };
             foreach (var n in graph)
             {
@@ -536,7 +591,7 @@ namespace Livrable2
                 }
             }
 
-            ///Définir une palette de couleurs de lignes de métro
+            
             Dictionary<string, SKColor> ligneCouleurs = new()
             {
                 ["1"] = SKColors.Gold,
@@ -557,7 +612,7 @@ namespace Livrable2
                 ["14"] = SKColors.DarkViolet
             };
 
-            /// Affichage des sommets (stations)
+            
             var textPaint = new SKPaint
             {
                 Color = SKColors.Black,
@@ -570,7 +625,7 @@ namespace Livrable2
             {
                 var pos = positions[n.Station.Id];
 
-                ///Couleur selon la première ligne de la station
+                
                 SKColor couleur = SKColors.DarkGray;
                 if (n.Station.Lignes.Length > 0)
                 {
@@ -582,11 +637,11 @@ namespace Livrable2
                 var nodePaint = new SKPaint { Color = couleur, IsAntialias = true };
                 canvas.DrawCircle(pos, 6, nodePaint);
 
-                ///Nom de la station en noir
+                
                 canvas.DrawText(n.Station.Nom, pos.X, pos.Y - 10, textPaint);
             }
 
-            ///Sauvegarde de l'image
+            
             string filePath = "graphe_paris_colore.png";
             using var image = surface.Snapshot();
             using var data = image.Encode(SKEncodedImageFormat.Png, 100);
@@ -597,6 +652,10 @@ namespace Livrable2
             Process.Start("explorer.exe", filePath);
         }
 
+        /// <summary>
+        /// Génère une image du graphe avec un chemin spécifique dessiné en rouge
+        /// </summary>
+        /// <param name="chemin">Liste des stations à relier dans le graphe</param>
         public void VisualiserGrapheAvecChemin(List<int> chemin)
         {
             int width = 4800;
@@ -704,14 +763,19 @@ namespace Livrable2
 
 
         #region COLORATION
+
+        /// <summary>
+        /// Trouve la coloration du graphe avec la méthode de Welsh Powell
+        /// </summary>
+        /// <returns>Liste avec les couleurs pour chaque stations</returns>
         public int[] WelshPowellColoration()
         {
             int n = graph.Length;
-            int[] couleurs = new int[n]; /// 0 = non colorié
+            int[] couleurs = new int[n]; 
 
-            ///créer deux tableaux pour trier les sommets par degré décroissant
-            int[] ids = new int[n];      /// index des sommets
-            int[] degres = new int[n];   ///leur degré (nombre de voisins)
+            
+            int[] ids = new int[n];      
+            int[] degres = new int[n];   
 
             for (int i = 0; i < n; i++)
             {
@@ -719,7 +783,7 @@ namespace Livrable2
                 degres[i] = graph[i].Lien.Length;
             }
 
-            /// Tri des ids selon le degré décroissant (tri à bulles simple)
+            
             for (int i = 0; i < n - 1; i++)
             {
                 for (int j = i + 1; j < n; j++)
@@ -743,7 +807,7 @@ namespace Livrable2
                 {
                     couleurs[idCourant] = couleurActuelle;
 
-                    /// Colorier les autres sommets compatibles
+                    
                     for (int j = 0; j < n; j++)
                     {
                         int autreId = ids[j];
@@ -775,6 +839,10 @@ namespace Livrable2
             return couleurs;
         }
 
+        /// <summary>
+        /// Retourne le nombre chromatique du graphe (nombre de couleurs utilisées)
+        /// </summary>
+        /// <returns>Nombre chromatique</returns>
         public int NombreChromatique()
         {
             int[] couleurs = WelshPowellColoration();
@@ -784,6 +852,10 @@ namespace Livrable2
 
         }
 
+        /// <summary>
+        /// Indique si le graphe est biparti (2 couleurs suffisent)
+        /// </summary>
+        /// <returns>True si biparti</returns>
         public bool EstBiparti()
         {
             bool result = false;
@@ -794,6 +866,10 @@ namespace Livrable2
             return result;
         }
 
+        /// <summary>
+        /// Vérifie si le graphe est planaire selon le théorème des 4 couleurs
+        /// </summary>
+        /// <returns>True si planaire</returns>
         public bool EstPotentiellementPlanaire()
         {
             bool result = false;
