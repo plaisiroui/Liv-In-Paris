@@ -103,7 +103,10 @@ namespace Livrable2
                 }
             }
         }
-
+        /// <summary>
+        /// Génère un id unique pour un nouvel utilisateur en s'assurant que celui ci n'existe pas déjà dans la BDD
+        /// </summary>
+        /// <returns>retourne un string qui represente un id unique de la forme U+ 3 chiffres (ex: "U001")</returns>
         static string GenererIDUniqueUtilisateur()
         {
             using (MySqlConnection connection = new MySqlConnection(connectionString))
@@ -1002,6 +1005,7 @@ namespace Livrable2
                         Console.WriteLine("Algorithme utilisé : Floyd-Warshall");
                         (double[,] mat, int[,] next) = g2.FloydWarshall();
                         chemin = g2.ReconstituerChemin(stationDepart, stationArrivee, next);
+                        g2.VisualiserGrapheAvecChemin(chemin);
                         break;
 
                     default:
@@ -1363,6 +1367,12 @@ namespace Livrable2
             Console.WriteLine("3. Afficher le prix moyen des commandes");
             Console.WriteLine("4. Afficher les clients ayant commandé plus de X fois");
             Console.WriteLine("5. Afficher le nombre total de plats différents commandés");
+            Console.WriteLine("6. Clients avec plus de 2 commandes (GROUP BY + HAVING)");
+            Console.WriteLine("7. Clients sans commande (LEFT JOIN)");
+            Console.WriteLine("8. Plats plus chers qu’au moins un plat du cuisinier choisi(ANY)");
+            Console.WriteLine("9. Plats plus chers que ceux du cuisinier choisi(ALL)");
+            Console.WriteLine("10. Cuisiniers avec un plat du jour (EXISTS)");
+
 
             Console.Write("Choisissez une option : ");
             string choix = Console.ReadLine();
@@ -1383,6 +1393,21 @@ namespace Livrable2
                     break;
                 case "5":
                     AfficherNombrePlatsDifferentsCommandes();
+                    break;
+                case "6":
+                    RequeteGroupByHaving();
+                    break;
+                case "7":
+                    RequeteLeftJoin();
+                    break;
+                case "8":
+                    RequeteAny();
+                    break;
+                case "9":
+                    RequeteAll();
+                    break;
+                case "10":
+                    RequeteExists();
                     break;
                 default:
                     Console.WriteLine("Option invalide.");
@@ -1502,6 +1527,122 @@ namespace Livrable2
                 }
             }
         }
+
+        static void RequeteGroupByHaving()
+        {
+            using var conn = new MySqlConnection(connectionString);
+            conn.Open();
+
+            string requeteGBH = "SELECT idUtilisateur, COUNT(*) AS nbCommandes from Commande  GROUP BY idUtilisateur HAVING COUNT(*) > 2;";
+
+            using var cmd = new MySqlCommand(requeteGBH, conn);
+            using var reader = cmd.ExecuteReader();
+
+            Console.WriteLine("Clients ayant passé plus de 2 commandes :");
+            while (reader.Read())
+            {
+                Console.WriteLine("Client " + reader["idUtilisateur"] + " => " + reader["nbCommandes"] + " commandes");
+            }
+        }
+
+        static void RequeteLeftJoin()
+        {
+            using var conn = new MySqlConnection(connectionString);
+            conn.Open();
+
+            string requeteLJ = "SELECT idUtilisateur, nom, prenom  FROM Utilisateur " +
+                "  LEFT JOIN Commande using(idUtilisateur)" +
+                " WHERE idCommande IS NULL;";
+
+            using var cmd = new MySqlCommand(requeteLJ, conn);
+            using var reader = cmd.ExecuteReader();
+
+            Console.WriteLine("Clients n’ayant jamais passé de commande :");
+            while (reader.Read())
+            {
+                Console.WriteLine(reader["idUtilisateur"] + " – " + reader["nom"] + " " + reader["prenom"]);
+            }
+        }
+
+        static void RequeteAny()
+        {
+            Console.Write("Entrez l’ID du cuisinier à comparer (Tapez A pour voir les cuisiniers) : ");
+            string idCuisinier = Console.ReadLine();
+            if (idCuisinier == "A")
+            {
+                AfficherCuisiniers();
+                Console.Write("ID du cuisinier à comparer: ");
+                idCuisinier = Console.ReadLine();
+            }
+
+            using var conn = new MySqlConnection(connectionString);
+            conn.Open();
+
+            string requeteAny = "SELECT idPlat, nomPlat, prix FROM Plat " +
+                "WHERE prix > ANY ( SELECT prix FROM Plat WHERE idUtilisateur = @idCuisinier);";
+
+            using var cmd = new MySqlCommand(requeteAny, conn);
+            cmd.Parameters.AddWithValue("@idCuisinier", idCuisinier);
+
+            using var reader = cmd.ExecuteReader();
+
+            Console.WriteLine("Plats plus chers qu’au moins un plat du cuisinier " + idCuisinier + " :");
+            while (reader.Read())
+            {
+                Console.WriteLine(reader["idPlat"] + " – " + reader["nomPlat"] + " (" + reader["prix"] + " eruos)");
+            }
+        }
+
+        static void RequeteAll()
+        {
+            Console.Write("Entrez l’ID du cuisinier à comparer (Tapez A pour voir les cuisiniers) : ");
+            string idCuisinier = Console.ReadLine();
+            if (idCuisinier == "A")
+            {
+                AfficherCuisiniers();
+                Console.Write("ID du cuisinier à comparer: ");
+                idCuisinier = Console.ReadLine();
+            }
+            using var conn = new MySqlConnection(connectionString);
+            conn.Open();
+
+            string requeteALL = "SELECT idPlat, nomPlat, prix FROM Plat " +
+                "WHERE prix > ALL ( SELECT prix FROM Plat WHERE idUtilisateur = @idCuisinier );";
+
+            using var cmd = new MySqlCommand(requeteALL, conn);
+            cmd.Parameters.AddWithValue("@idCuisinier", idCuisinier);
+
+            using var reader = cmd.ExecuteReader();
+
+            Console.WriteLine("Plats plus chers que TOUS ceux du cuisinier " + idCuisinier + " :");
+            while (reader.Read())
+            {
+                Console.WriteLine(reader["idPlat"] + " – " + reader["nomPlat"] + " (" + reader["prix"] + " eruos)");
+            }
+        }
+
+        static void RequeteExists()
+        {
+            using var conn = new MySqlConnection(connectionString);
+            conn.Open();
+
+            string requeteExists = @"SELECT u.idUtilisateur, nom, prenom  FROM Utilisateur u "+
+                "WHERE EXISTS (SELECT * FROM Plat p WHERE p.idUtilisateur = u.idUtilisateur AND platDuJour = 1  );";
+
+            using var cmd = new MySqlCommand(requeteExists, conn);
+            using var reader = cmd.ExecuteReader();
+
+            Console.WriteLine("Cuisiniers avec au moins un plat du jour :");
+            while (reader.Read())
+            {
+                Console.WriteLine(reader["idUtilisateur"] + " – " + reader["nom"] + " " + reader["prenom"]);
+            }
+        }
+
+
+
+
+
 
 
 
