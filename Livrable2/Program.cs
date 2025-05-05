@@ -214,12 +214,14 @@ namespace Livrable2
             {
                 connection.Open();
                 string[] listRequete = {
-                "DELETE FROM Evaluation WHERE idEvaluateur = @id" ,
-                "DELETE FROM Commande WHERE idUtilisateur = @id",
-                "DELETE FROM AdresseLivraison WHERE idUtilisateur = @id",
-                "DELETE FROM Client WHERE idUtilisateur = @id",
-                "DELETE FROM Utilisateur WHERE idUtilisateur = @id"
-            };
+    "DELETE FROM Contenir WHERE idCommande IN (SELECT idCommande FROM Commande WHERE idUtilisateur = @id)",
+    "DELETE FROM Livraison WHERE idCommande IN (SELECT idCommande FROM Commande WHERE idUtilisateur = @id)",
+    "DELETE FROM Evaluation WHERE idEvaluateur = @id",
+    "DELETE FROM Evaluation WHERE idEvalue = @id",
+    "DELETE FROM Commande WHERE idUtilisateur = @id",
+    "DELETE FROM Client WHERE idUtilisateur = @id",
+    "DELETE FROM Utilisateur WHERE idUtilisateur = @id"
+};
                 foreach (string requete in listRequete)
                 {
                     using (MySqlCommand cmd = new MySqlCommand(requete, connection))
@@ -536,10 +538,16 @@ namespace Livrable2
             {
                 connection.Open();
                 string[] requetesDeleteCuisi = {
-            "DELETE FROM Plat WHERE idUtilisateur = @id",
-            "DELETE FROM Cuisinier WHERE idUtilisateur = @id",
-            "DELETE FROM Utilisateur WHERE idUtilisateur = @id"
-        };
+    "DELETE FROM Contenir WHERE idCommande IN (SELECT idCommande FROM Commande WHERE idUtilisateur = @id)",
+    "DELETE FROM Contenir WHERE idPlat IN (SELECT idPlat FROM Plat WHERE idUtilisateur = @id)",
+    "DELETE FROM Livraison WHERE idCommande IN (SELECT idCommande FROM Commande WHERE idUtilisateur = @id)",
+    "DELETE FROM Evaluation WHERE idEvaluateur = @id",
+    "DELETE FROM Evaluation WHERE idEvalue = @id",
+    "DELETE FROM Commande WHERE idUtilisateur = @id",
+    "DELETE FROM Plat WHERE idUtilisateur = @id",
+    "DELETE FROM Cuisinier WHERE idUtilisateur = @id",
+    "DELETE FROM Utilisateur WHERE idUtilisateur = @id"
+};
 
                 foreach (string requete in requetesDeleteCuisi)
                 {
