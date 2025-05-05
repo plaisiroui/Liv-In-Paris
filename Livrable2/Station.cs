@@ -14,9 +14,14 @@ namespace Livrable2
         double latititude;       
         int[] lignes;
 
-        public Station(int id, string stations) ///Ici, on va lire la ligne (qui correspond à l'identifiant de la station concernée) 
-        {                                       ///pour extraire les informations de la station
-
+        /// <summary>
+        /// Constructeur qui va donner pour chaque station, son identifiant, son nom, sa longitude, 
+        /// sa latitude et les lignes de métro associées
+        /// </summary>
+        /// <param name="id">Identifiant de la station</param>
+        /// <param name="stations">Chemin vers le fichier des stations</param>
+        public Station(int id, string stations) 
+        {                                
             string[] m = File.ReadAllText(stations).Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
             string[] n = (m[id - 1]).Split(new[] { ';' });
             string[] o = (n[4]).Split(new[] { ',' });
@@ -31,14 +36,6 @@ namespace Livrable2
             this.longitude = double.Parse(n[2]);
             this.latititude = double.Parse(n[3]);
             this.lignes = p;
-        }
-        public Station(int id, string nom, double latititude, double longitude, int[] lignes)
-        {
-            this.id = id;
-            this.nom = nom;
-            this.latititude = latititude;
-            this.longitude = longitude;
-            this.lignes = lignes;
         }
         public int Id
         {
