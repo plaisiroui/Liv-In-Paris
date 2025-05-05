@@ -23,7 +23,7 @@ namespace Livrable2
 
             while (true)
             {
-                Console.WriteLine("===== Menu Principal =====");
+                Console.WriteLine("\n===== Menu Principal =====");
                 Console.WriteLine("1. Module Client");
                 Console.WriteLine("2. Module Cuisinier ");
                 Console.WriteLine("3. Module Commande ");
@@ -371,12 +371,13 @@ namespace Livrable2
                 Console.WriteLine("\n===== MODULE CUISINIER =====");
                 Console.WriteLine("1. Ajouter un cuisinier");
                 Console.WriteLine("2. Modifier un cuisinier");
-                Console.WriteLine("3. Supprimer un cuisinier");
-                Console.WriteLine("4. Afficher les clients servis");
-                Console.WriteLine("5. Afficher les plats réalisés par fréquence");
-                Console.WriteLine("6. Afficher le plat du jour");
-                Console.WriteLine("7. Ajouter un plat");
-                Console.WriteLine("8. Retour au menu principal");
+                Console.WriteLine("3. Afficher les clients");
+                Console.WriteLine("4. Supprimer un cuisinier");
+                Console.WriteLine("5. Afficher les clients servis");
+                Console.WriteLine("6. Afficher les plats réalisés par fréquence");
+                Console.WriteLine("7. Afficher le plat du jour");
+                Console.WriteLine("8. Ajouter un plat");
+                Console.WriteLine("9. Retour au menu principal");
                 Console.Write("Choisissez une option: ");
 
                 string choix = Console.ReadLine();
@@ -390,22 +391,24 @@ namespace Livrable2
                         ModifierCuisinier();
                         break;
                     case "3":
-                        SupprimerCuisinier();
+                        AfficherCuisiniers();
                         break;
                     case "4":
-                        AfficherClientsServis();
+                        SupprimerCuisinier();
                         break;
                     case "5":
-                        AfficherPlatsParFrequence();
+                        AfficherClientsServis();
                         break;
                     case "6":
-                        AfficherPlatDuJour();
+                        AfficherPlatsParFrequence();
                         break;
                     case "7":
+                        AfficherPlatDuJour();
+                        break;
+                    case "8":
                         AjouterPlat();
                         break;
-
-                    case "8":
+                    case "9":
                         return;
                     default:
                         Console.WriteLine("Option invalide, veuillez réessayer.");
@@ -725,9 +728,9 @@ namespace Livrable2
                 }
             }
         }
-/// <summary>
-/// Affiche la liste des cuisiniers
-/// </summary>
+        /// <summary>
+        /// Affiche la liste des cuisiniers
+        /// </summary>
         static void AfficherCuisiniers()
         {
             Console.WriteLine("\n=== LISTE DES CUISINIERS ===");
@@ -892,7 +895,7 @@ namespace Livrable2
                     }
                 }
 
-                
+
                 string requetePlats = "SELECT idPlat, nomPlat, prix FROM Plat WHERE idUtilisateur = '" + idCuisinier + "'";
                 List<string> platsDisponibles = new List<string>();
                 using (MySqlCommand cmd = new MySqlCommand(requetePlats, connection))
@@ -1245,7 +1248,7 @@ namespace Livrable2
         #endregion
 
         #region MODULE STATISTIQUE 
-        
+
         static void ModuleStatistique()
         {
             while (true)
@@ -1717,7 +1720,7 @@ namespace Livrable2
             using var conn = new MySqlConnection(connectionString);
             conn.Open();
 
-            string requeteExists = @"SELECT u.idUtilisateur, nom, prenom  FROM Utilisateur u "+
+            string requeteExists = @"SELECT u.idUtilisateur, nom, prenom  FROM Utilisateur u " +
                 "WHERE EXISTS (SELECT * FROM Plat p WHERE p.idUtilisateur = u.idUtilisateur AND platDuJour = 1  );";
 
             using var cmd = new MySqlCommand(requeteExists, conn);
@@ -1730,18 +1733,7 @@ namespace Livrable2
             }
         }
 
-
-
-
-
-
-
-
-
         #endregion
-
-
-
 
     }
 }
