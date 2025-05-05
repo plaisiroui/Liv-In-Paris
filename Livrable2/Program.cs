@@ -470,7 +470,7 @@ namespace Livrable2
             string id = Console.ReadLine();
             if (id == "A")
             {
-                AfficherClients();
+                AfficherCuisiniers();
                 Console.Write("ID du cuisinier à modifier : ");
                 id = Console.ReadLine();
             }
@@ -541,7 +541,7 @@ namespace Livrable2
             string idCuisinier = Console.ReadLine();
             if (idCuisinier == "A")
             {
-                AfficherClients();
+                AfficherCuisiniers();
                 Console.Write("ID du cuisinier à supprimer : ");
                 idCuisinier = Console.ReadLine();
             }
@@ -647,7 +647,7 @@ namespace Livrable2
             string id = Console.ReadLine();
             if (id == "A")
             {
-                AfficherClients();
+                AfficherCuisiniers();
                 Console.Write("ID du cuisinier: ");
                 id = Console.ReadLine();
             }
@@ -731,7 +731,6 @@ namespace Livrable2
 
             while (true)
             {
-                Console.Clear();
                 Console.WriteLine("\n==== Module Commande ===");
                 Console.WriteLine("1. Passer une commande");
                 Console.WriteLine("2. Afficher le prix d’une commande");
