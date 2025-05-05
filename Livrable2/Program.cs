@@ -12,36 +12,6 @@ namespace Livrable2
 {
     class Program
     {
-       
-        /*public static void Main(string[] args)
-        {
-            string fichier_connexion = "Connexions.txt";
-            string fichier_StationMetro = "StationsMetro.txt";
-            Graphe<int> g1 = new Graphe<int>(fichier_connexion,fichier_StationMetro);
-            List<int> chemin = g1.Dijkstra(50, 233);
-            List<int> chemin2 = g1.BellmanFord(50, 233);
-            (double[,] distance, int[,] next) = g1.FloydWarshall();
-            List<int> chemin3 = g1.ReconstituerChemin(50, 233,next);
-
-            for (int i = 0; i < chemin.Count; i++)
-            {
-                Console.Write(chemin[i]+" ");
-            }
-            Console.WriteLine(g1.CalculerTempsChemin(chemin));
-            for (int i = 0; i < chemin3.Count; i++)
-            {
-                Console.Write(chemin2[i] + " ");
-            }
-            Console.WriteLine(g1.CalculerTempsChemin(chemin2));
-            for (int i = 0; i < chemin3.Count; i++)
-            {
-                Console.Write(chemin3[i] + " ");
-            }
-            Console.WriteLine(g1.CalculerTempsChemin(chemin3));
-
-            g1.VisualiserGrapheAvecChemin(chemin3);
-
-        }*/
 
         static string connectionString = "Server=localhost;Database=livinparis;User ID=root;Password=root;";
 
@@ -169,6 +139,11 @@ namespace Livrable2
             string adresse = Console.ReadLine();
             Console.Write("Téléphone : ");
             string telephone = Console.ReadLine();
+            while (telephone.Length != 10)
+            {
+                Console.WriteLine("Erreur, réessayer :");
+                telephone = Console.ReadLine();
+            }
             Console.Write("Adresse Mail : ");
             string email = Console.ReadLine();
             Console.Write("Mot de passe : ");
@@ -176,7 +151,7 @@ namespace Livrable2
             Console.Write("Type de client (Particulier, Entreprise, Autre) : ");
             string typeClient = Console.ReadLine();
 
-          
+
             string fichier_connexion = "Connexions.txt";
             string fichier_StationMetro = "StationsMetro.txt";
             Graphe<int> grph1 = new Graphe<int>(fichier_connexion, fichier_StationMetro);
@@ -184,6 +159,12 @@ namespace Livrable2
             Console.Write("Station la plus proche (Bien écrire, exemple: Balard) ");
             string stationPP = Console.ReadLine();
             int idstationPP = grph1.NomAIdentifiant(stationPP);
+            while (idstationPP == -1)
+            {
+                Console.WriteLine("Erreur, station mal écrite, réessayer :");
+                stationPP  = Console.ReadLine();
+                idstationPP = grph1.NomAIdentifiant(stationPP);
+            }
 
 
             string idUtilisateur = GenererIDUniqueUtilisateur();
@@ -201,7 +182,7 @@ namespace Livrable2
                     cmd.Parameters.AddWithValue("@adresse", adresse);
                     cmd.Parameters.AddWithValue("@telephone", telephone);
                     cmd.Parameters.AddWithValue("@password", password);
-                    cmd.Parameters.AddWithValue("@idstationPP", idstationPP);  
+                    cmd.Parameters.AddWithValue("@idstationPP", idstationPP);
                     cmd.ExecuteNonQuery();
                 }
 
@@ -221,8 +202,14 @@ namespace Livrable2
 
             Console.WriteLine("\n=== SUPPRESSION D'UN CLIENT ===");
 
-            Console.Write("ID du client à supprimer : ");
+            Console.Write("ID du client à supprimer (Taper A pour afficher les cliens d'abord) : ");
             string idClient = Console.ReadLine();
+            if (idClient == "A")
+            {
+                AfficherClients();
+                Console.Write("ID du client à supprimer : ");
+                idClient = Console.ReadLine();
+            }
             using (MySqlConnection connection = new MySqlConnection(connectionString))
             {
                 connection.Open();
@@ -260,6 +247,11 @@ namespace Livrable2
             string adresse = Console.ReadLine();
             Console.Write("Nouveau téléphone: ");
             string telephone = Console.ReadLine();
+            while (telephone.Length != 10)
+            {
+                Console.WriteLine("Erreur, réessayer :");
+                telephone = Console.ReadLine();
+            }
             Console.Write("Nouveau type de client: ");
             string typeClient = Console.ReadLine();
 
@@ -270,6 +262,12 @@ namespace Livrable2
             Console.Write("Nouvelle station la plus proche (Bien écrire, exemple: Balard) ");
             string stationPP = Console.ReadLine();
             int idstationPP = grph1.NomAIdentifiant(stationPP);
+            while (idstationPP == -1)
+            {
+                Console.WriteLine("Erreur, station mal écrite, réessayer :");
+                stationPP = Console.ReadLine();
+                idstationPP = grph1.NomAIdentifiant(stationPP);
+            }
 
             using (MySqlConnection conn = new MySqlConnection(connectionString))
             {
@@ -398,6 +396,11 @@ namespace Livrable2
             string adresse = Console.ReadLine();
             Console.Write("Téléphone : ");
             string telephone = Console.ReadLine();
+            while (telephone.Length != 10)
+            {
+                Console.WriteLine("Erreur, réessayer :");
+                telephone = Console.ReadLine();
+            }
             Console.Write("Adresse Mail : ");
             string email = Console.ReadLine();
             Console.Write("Mot de passe : ");
@@ -412,6 +415,12 @@ namespace Livrable2
             Console.Write("Station la plus proche (Bien écrire, exemple: Balard) ");
             string stationPP = Console.ReadLine();
             int idstationPP = grph1.NomAIdentifiant(stationPP);
+            while (idstationPP == -1)
+            {
+                Console.WriteLine("Erreur, station mal écrite, réessayer :");
+                stationPP = Console.ReadLine();
+                idstationPP = grph1.NomAIdentifiant(stationPP);
+            }
 
 
             string idUtilisateur = GenererIDUniqueUtilisateur();
@@ -459,6 +468,11 @@ namespace Livrable2
             string adresse = Console.ReadLine();
             Console.Write("Nouveau téléphone: ");
             string telephone = Console.ReadLine();
+            while (telephone.Length != 10)
+            {
+                Console.WriteLine("Erreur, réessayer :");
+                telephone = Console.ReadLine();
+            }
             Console.Write("Nouvelle spécialité:  ");
             string specialite = Console.ReadLine();
 
@@ -469,6 +483,13 @@ namespace Livrable2
             Console.Write("Station la plus proche (Bien écrire, exemple: Balard) ");
             string stationPP = Console.ReadLine();
             int idstationPP = grph1.NomAIdentifiant(stationPP);
+            while (idstationPP == -1)
+            {
+                Console.WriteLine("Erreur, station mal écrite, réessayer :");
+                stationPP = Console.ReadLine();
+                idstationPP = grph1.NomAIdentifiant(stationPP);
+            }
+
             using (MySqlConnection conn = new MySqlConnection(connectionString))
             {
                 conn.Open();
@@ -504,6 +525,12 @@ namespace Livrable2
 
             Console.Write("ID du cuisinier à supprimer : ");
             string idCuisinier = Console.ReadLine();
+            if (idCuisinier == "A")
+            {
+                AfficherClients();
+                Console.Write("ID du client à supprimer : ");
+                idCuisinier = Console.ReadLine();
+            }
 
             using (MySqlConnection connection = new MySqlConnection(connectionString))
             {
@@ -652,6 +679,7 @@ namespace Livrable2
 
             while (true)
             {
+                Console.Clear();
                 Console.WriteLine("\n==== Module Commande ===");
                 Console.WriteLine("1. Passer une commande");
                 Console.WriteLine("2. Afficher le prix d’une commande");
@@ -728,8 +756,8 @@ namespace Livrable2
             Console.Write("Entrez l'ID du cuisinier auquel vous voulez commander : ");
             string idCuisinier = Console.ReadLine();
 
-            int stationArrivee = -1; 
-            int stationDepart = -1;  
+            int stationArrivee = -1;
+            int stationDepart = -1;
 
             using (MySqlConnection connection = new MySqlConnection(connectionString))
             {
@@ -780,7 +808,7 @@ namespace Livrable2
                         string nomPlat = reader["nomPlat"].ToString();
                         double prix = Convert.ToDouble(reader["prix"]);
                         platsDisponibles.Add(idPlat);
-                        Console.WriteLine("- "+idPlat+ " : " +nomPlat+ " ("+prix+" euros)");
+                        Console.WriteLine("- " + idPlat + " : " + nomPlat + " (" + prix + " euros)");
                     }
                 }
 
@@ -798,7 +826,7 @@ namespace Livrable2
                     return;
                 }
 
-                
+
                 double prixCommande = 0;
                 string requetePrix = "SELECT prix FROM Plat WHERE idPlat = '" + idPlatChoisi + "'";
                 using (MySqlCommand cmd = new MySqlCommand(requetePrix, connection))
@@ -806,7 +834,7 @@ namespace Livrable2
                     prixCommande = Convert.ToDouble(cmd.ExecuteScalar());
                 }
 
-                
+
                 string idCommande = GenererIDUniqueCommande();
                 string statut = "En cours";
 
@@ -860,16 +888,16 @@ namespace Livrable2
         public static void DeterminerTrajetOptimal()
         {
             Console.Write("Entrez le numéro de commande : ");
-            string idCommande =Console.ReadLine();
+            string idCommande = Console.ReadLine();
 
             int stationDepart = -1;
             int stationArrivee = -1;
             using (MySqlConnection connection = new MySqlConnection(connectionString))
             {
                 connection.Open();
-                
-                string requeteRecupStations = "SELECT idStationDepart, idStationArrivee FROM Commande WHERE idCommande = '" + idCommande+"'";
-               
+
+                string requeteRecupStations = "SELECT idStationDepart, idStationArrivee FROM Commande WHERE idCommande = '" + idCommande + "'";
+
 
                 using (MySqlCommand commande = new MySqlCommand(requeteRecupStations, connection))
                 using (MySqlDataReader reader = commande.ExecuteReader())
@@ -910,17 +938,19 @@ namespace Livrable2
                     case "1":
                         chemin = g2.Dijkstra(stationDepart, stationArrivee);
                         Console.WriteLine("Algorithme utilisé : Dijkstra");
-                        //Afficher le chemin avec carte
+                        g2.VisualiserGrapheAvecChemin(chemin);
                         break;
 
                     case "2":
                         chemin = g2.BellmanFord(stationDepart, stationArrivee);
                         Console.WriteLine("Algorithme utilisé : Bellman-Ford");
-                        //Afficher le chemin avec carte
+                        g2.VisualiserGrapheAvecChemin(chemin);
                         break;
 
                     case "3":
-                        Console.WriteLine("En cours d'implémentation....");
+                        Console.WriteLine("Algorithme utilisé : Floyd-Warshall");
+                        (double[,] mat, int[,] next) = g2.FloydWarshall();
+                         chemin = g2.ReconstituerChemin(stationDepart, stationArrivee, next);
                         break;
 
                     default:
@@ -935,7 +965,7 @@ namespace Livrable2
             }
         }
 
-        public   static void ModifierCommande()
+        public static void ModifierCommande()
         {
             Console.Write("Entrez l'ID de la commande à modifier : ");
             string idCommande = Console.ReadLine();
@@ -1375,7 +1405,7 @@ namespace Livrable2
                 }
             }
         }
-         
+
         public static void AfficherClientsCommandesXfois()
         {
             Console.Write("Entrez le nombre minimum de commandes à afficher (X) : ");
@@ -1432,4 +1462,3 @@ namespace Livrable2
 
     }
 }
-
