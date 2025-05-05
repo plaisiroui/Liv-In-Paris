@@ -371,7 +371,7 @@ namespace Livrable2
                 Console.WriteLine("\n===== MODULE CUISINIER =====");
                 Console.WriteLine("1. Ajouter un cuisinier");
                 Console.WriteLine("2. Modifier un cuisinier");
-                Console.WriteLine("3. Afficher les clients");
+                Console.WriteLine("3. Afficher les cuisiniers");
                 Console.WriteLine("4. Supprimer un cuisinier");
                 Console.WriteLine("5. Afficher les clients servis");
                 Console.WriteLine("6. Afficher les plats réalisés par fréquence");
@@ -496,7 +496,7 @@ namespace Livrable2
 
             Console.WriteLine("\n=== MODIFICATION D'UN CUISINIER ===");
 
-            Console.Write("ID du cuisinier à modifier: (Taper A d'abord pour afficher les cuisiniers ");
+            Console.Write("ID du cuisinier à modifier: (Taper A d'abord pour afficher les cuisiniers) ");
             string id = Console.ReadLine();
             if (id == "A")
             {
@@ -569,7 +569,7 @@ namespace Livrable2
 
             Console.WriteLine("\n=== SUPPRESSION D'UN CUISINIER ===");
 
-            Console.Write("ID du cuisinier à supprimer (Tapez A d'abord pour afficher les cuisiniers ");
+            Console.Write("ID du cuisinier à supprimer (Tapez A d'abord pour afficher les cuisiniers) ");
             string idCuisinier = Console.ReadLine();
             if (idCuisinier == "A")
             {
@@ -1434,57 +1434,63 @@ namespace Livrable2
         /// </summary>
         public static void ModuleAutre()
         {
-            Console.WriteLine("\n=== MODULE AUTRE ===");
-            Console.WriteLine("1. Afficher les stations");
-            Console.WriteLine("2. Afficher la dernière commande passée");
-            Console.WriteLine("3. Afficher le prix moyen des commandes");
-            Console.WriteLine("4. Afficher les clients ayant commandé plus de X fois");
-            Console.WriteLine("5. Afficher le nombre total de plats différents commandés");
-            Console.WriteLine("6. Clients avec plus de 2 commandes (GROUP BY + HAVING)");
-            Console.WriteLine("7. Clients sans commande (LEFT JOIN)");
-            Console.WriteLine("8. Plats plus chers qu’au moins un plat du cuisinier choisi(ANY)");
-            Console.WriteLine("9. Plats plus chers que ceux du cuisinier choisi(ALL)");
-            Console.WriteLine("10. Cuisiniers avec un plat du jour (EXISTS)");
-
-
-            Console.Write("Choisissez une option : ");
-            string choix = Console.ReadLine();
-
-            switch (choix)
+            while (true)
             {
-                case "1":
-                    AfficherStations();
-                    break;
-                case "2":
-                    AfficherDerniereCommande();
-                    break;
-                case "3":
-                    AfficherPrixMoyenCommandes();
-                    break;
-                case "4":
-                    AfficherClientsCommandesXfois();
-                    break;
-                case "5":
-                    AfficherNombrePlatsDifferentsCommandes();
-                    break;
-                case "6":
-                    RequeteGroupByHaving();
-                    break;
-                case "7":
-                    RequeteLeftJoin();
-                    break;
-                case "8":
-                    RequeteAny();
-                    break;
-                case "9":
-                    RequeteAll();
-                    break;
-                case "10":
-                    RequeteExists();
-                    break;
-                default:
-                    Console.WriteLine("Option invalide.");
-                    break;
+                Console.WriteLine("\n=== MODULE AUTRE ===");
+                Console.WriteLine("1. Afficher les stations");
+                Console.WriteLine("2. Afficher la dernière commande passée");
+                Console.WriteLine("3. Afficher le prix moyen des commandes");
+                Console.WriteLine("4. Afficher les clients ayant commandé plus de X fois");
+                Console.WriteLine("5. Afficher le nombre total de plats différents commandés");
+                Console.WriteLine("6. Clients avec plus de 2 commandes (GROUP BY + HAVING)");
+                Console.WriteLine("7. Clients sans commande (LEFT JOIN)");
+                Console.WriteLine("8. Plats plus chers qu’au moins un plat du cuisinier choisi(ANY)");
+                Console.WriteLine("9. Plats plus chers que ceux du cuisinier choisi(ALL)");
+                Console.WriteLine("10. Cuisiniers avec un plat du jour (EXISTS)");
+                Console.WriteLine("11. Retour au menu");
+
+
+                Console.Write("Choisissez une option : ");
+                string choix = Console.ReadLine();
+
+                switch (choix)
+                {
+                    case "1":
+                        AfficherStations();
+                        break;
+                    case "2":
+                        AfficherDerniereCommande();
+                        break;
+                    case "3":
+                        AfficherPrixMoyenCommandes();
+                        break;
+                    case "4":
+                        AfficherClientsCommandesXfois();
+                        break;
+                    case "5":
+                        AfficherNombrePlatsDifferentsCommandes();
+                        break;
+                    case "6":
+                        RequeteGroupByHaving();
+                        break;
+                    case "7":
+                        RequeteLeftJoin();
+                        break;
+                    case "8":
+                        RequeteAny();
+                        break;
+                    case "9":
+                        RequeteAll();
+                        break;
+                    case "10":
+                        RequeteExists();
+                        break;
+                    case "11":
+                        return;
+                    default:
+                        Console.WriteLine("Option invalide.");
+                        break;
+                }
             }
         }
         /// <summary>
