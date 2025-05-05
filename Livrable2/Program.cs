@@ -162,7 +162,7 @@ namespace Livrable2
             while (idstationPP == -1)
             {
                 Console.WriteLine("Erreur, station mal écrite, réessayer :");
-                stationPP  = Console.ReadLine();
+                stationPP = Console.ReadLine();
                 idstationPP = grph1.NomAIdentifiant(stationPP);
             }
 
@@ -239,8 +239,14 @@ namespace Livrable2
 
             Console.WriteLine("\n=== MODIFICATION D'UN CLIENT ===");
 
-            Console.Write("ID du client à modifier: ");
+            Console.Write("ID du client à modifier(Taper A pour afficher les cliens d'abord) : ");
             string id = Console.ReadLine();
+            if (id == "A")
+            {
+                AfficherClients();
+                Console.Write("ID du client à supprimer : ");
+                id = Console.ReadLine();
+            }
             Console.Write("Nouveau nom: ");
             string nom = Console.ReadLine();
             Console.Write("Nouveau prénom: ");
@@ -460,8 +466,14 @@ namespace Livrable2
 
             Console.WriteLine("\n=== MODIFICATION D'UN CUISINIER ===");
 
-            Console.Write("ID du client à modifier: ");
+            Console.Write("ID du cuisinier à modifier: (Taper A d'abord pour afficher les cuisiniers ");
             string id = Console.ReadLine();
+            if (id == "A")
+            {
+                AfficherClients();
+                Console.Write("ID du cuisinier à modifier : ");
+                id = Console.ReadLine();
+            }
             Console.Write("Nouveau nom: ");
             string nom = Console.ReadLine();
             Console.Write("Nouveau prénom: ");
@@ -525,12 +537,12 @@ namespace Livrable2
 
             Console.WriteLine("\n=== SUPPRESSION D'UN CUISINIER ===");
 
-            Console.Write("ID du cuisinier à supprimer : ");
+            Console.Write("ID du cuisinier à supprimer (Tapez A d'abord pour afficher les cuisiniers ");
             string idCuisinier = Console.ReadLine();
             if (idCuisinier == "A")
             {
                 AfficherClients();
-                Console.Write("ID du client à supprimer : ");
+                Console.Write("ID du cuisinier à supprimer : ");
                 idCuisinier = Console.ReadLine();
             }
 
@@ -631,8 +643,14 @@ namespace Livrable2
 
         static void AfficherPlatsParFrequence()
         {
-            Console.Write("ID du cuisinier: ");
+            Console.Write("ID du cuisinier (Tapez A d'abord pour afficher les cuisiniers ");
             string id = Console.ReadLine();
+            if (id == "A")
+            {
+                AfficherClients();
+                Console.Write("ID du cuisinier: ");
+                id = Console.ReadLine();
+            }
 
             string requeteFreqPlat = "SELECT Plat.nom, COUNT(*) as freq FROM Commande " +
                            "JOIN Plat using (idPlat) " +
@@ -671,6 +689,32 @@ namespace Livrable2
                 }
             }
         }
+
+        static void AfficherCuisiniers()
+        {
+            Console.WriteLine("\n=== LISTE DES CUISINIERS ===");
+
+            using (MySqlConnection conn = new MySqlConnection(connectionString))
+            {
+                conn.Open();
+                string requeteAffichageCuisinier =
+                    "SELECT Cuisinier.idUtilisateur, nom, prenom, adresse, telephone, adresseMail, specialite " +
+                    "FROM Utilisateur JOIN Cuisinier USING(idUtilisateur);";
+
+                using (MySqlCommand cmd = new MySqlCommand(requeteAffichageCuisinier, conn))
+                using (MySqlDataReader reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        Console.WriteLine(
+                            "ID: " + reader["idUtilisateur"] + ", Nom: " + reader["nom"] + " " + reader["prenom"] +
+                            ", Adresse: " + reader["adresse"] + ", Téléphone: " + reader["telephone"] +
+                            ", Email: " + reader["adresseMail"] + ", Spécialité: " + reader["specialite"]);
+                    }
+                }
+            }
+        }
+
 
 
 
@@ -958,7 +1002,7 @@ namespace Livrable2
                     case "3":
                         Console.WriteLine("Algorithme utilisé : Floyd-Warshall");
                         (double[,] mat, int[,] next) = g2.FloydWarshall();
-                         chemin = g2.ReconstituerChemin(stationDepart, stationArrivee, next);
+                        chemin = g2.ReconstituerChemin(stationDepart, stationArrivee, next);
                         break;
 
                     default:
