@@ -14,8 +14,8 @@ namespace Livrable2
         double latititude;       
         int[] lignes;
 
-        public Station(int id, string stations) //Ici, on va lire la ligne (qui correspond à l'identifiant de la station concernée) 
-        {                                       //pour extraire les informations de la station
+        public Station(int id, string stations) ///Ici, on va lire la ligne (qui correspond à l'identifiant de la station concernée) 
+        {                                       ///pour extraire les informations de la station
 
             string[] m = File.ReadAllText(stations).Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
             string[] n = (m[id - 1]).Split(new[] { ';' });
