@@ -8,16 +8,22 @@ namespace Livrable2
 {
     public class Noeud<T>
     {
-        ///Pour chaque noeud, on lui associe sa station ainsi que ses lien avec les autres stations et le poids des liens
         Station station;
         int[] lien;
         double[] poids;
 
+        /// <summary>
+        /// Initialise un nœud à partir d'une matrice d'incidence et d'un identifiant de station se trouvant 
+        /// dans aussi dans le fichier de stations
+        /// </summary>
+        /// <param name="id">Identifiant de la station dans la matrice</param>
+        /// <param name="matrice">Matrice d'incidence représentant les connexions</param>
+        /// <param name="stations">Chemin vers le fichier contenant les stations</param>
         public Noeud(int id, double[,] matrice, string stations)
         {
-            this.station = new Station(id, stations);   ///On affecte la station à noeud grâce au document listant toutes les stations
+            this.station = new Station(id, stations);   
             int k = 0;
-            for (int i = 0; i< matrice.GetLength(1); i++)   ///On répertorie tout les identifiant de stations qui ont des liens avec la station
+            for (int i = 0; i< matrice.GetLength(1); i++)
             {
                 if (matrice[id - 1, i] != 0) { k++; }
             }
