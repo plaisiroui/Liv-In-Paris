@@ -1,3 +1,4 @@
+
 using System;
 using System.Collections.Generic;
 using System.Net.Http.Headers;
@@ -7,6 +8,10 @@ using MySql.Data.MySqlClient;
 using Org.BouncyCastle.Crypto.Engines;
 using System.Globalization;
 using System.Threading;
+using System.Xml.Serialization;
+using System.IO;
+using System.Text.Json;
+
 
 namespace Livrable2
 {
@@ -77,6 +82,7 @@ namespace Livrable2
                 Console.WriteLine("3. Modifier un client");
                 Console.WriteLine("4. Afficher les clients");
                 Console.WriteLine("5. Retour au menu principal");
+                Console.WriteLine("6. Exporter les clients au Format XML et JSON");
                 Console.Write("Votre choix : ");
                 string choix = Console.ReadLine();
 
@@ -100,6 +106,11 @@ namespace Livrable2
                 {
                     break;
                 }
+                else if (choix == "6")
+                {
+                    ExporterClients();
+                }
+
                 else
                 {
                     Console.WriteLine("Choix invalide, veuillez réessayer.");
@@ -203,7 +214,7 @@ namespace Livrable2
                     cmd.ExecuteNonQuery();
                 }
             }
-            Console.WriteLine("Client ajouté avec succès.");
+            Console.WriteLine("Client"+ idUtilisateur+" ajouté avec succès.");
         }
 
         /// <summary>
@@ -358,6 +369,58 @@ namespace Livrable2
                 }
             }
         }
+        /// <summary>
+        /// Exporte les clients au format XML et JSON
+        /// </summary>
+        public static void ExporterClients()
+        {
+            List<ClientSerializable> clients = new List<ClientSerializable>();
+
+            using (MySqlConnection connection = new MySqlConnection(connectionString))
+            {
+                connection.Open();
+                string requete = @"SELECT idUtilisateur, nom, prenom, adresse, telephone, adresseMail, typeClient FROM Utilisateur  JOIN Client using(idUtilisateur)";
+
+                using (MySqlCommand cmd = new MySqlCommand(requete, connection))
+                using (MySqlDataReader reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        clients.Add(new ClientSerializable
+                        {
+                            Id = reader["idUtilisateur"].ToString(),
+                            Nom = reader["nom"].ToString(),
+                            Prenom = reader["prenom"].ToString(),
+                            Adresse = reader["adresse"].ToString(),
+                            Telephone = reader["telephone"].ToString(),
+                            Email = reader["adresseMail"].ToString(),
+                            TypeClient = reader["typeClient"].ToString()
+                        });
+                    }
+                }
+            }
+
+            // XML
+            XmlSerializer xmlSerializer = new XmlSerializer(typeof(List<ClientSerializable>));
+            string xmlPath = "clients_export.xml";
+            using (TextWriter writer = new StreamWriter(xmlPath))
+            {
+                xmlSerializer.Serialize(writer, clients);
+            }
+
+            // JSON
+            string jsonPath = "clients_export.json";
+            string json = JsonSerializer.Serialize(clients, new JsonSerializerOptions { WriteIndented = true });
+            File.WriteAllText(jsonPath, json);
+
+            Console.WriteLine("Export XML et JSON terminés.");
+
+            // Ouvre les deux fichiers
+            System.Diagnostics.Process.Start("explorer.exe", xmlPath);
+            System.Diagnostics.Process.Start("explorer.exe", jsonPath);
+        }
+
+
         #endregion
 
         #region MODULE CUISINIER
@@ -779,7 +842,8 @@ namespace Livrable2
                 Console.WriteLine("2. Afficher le prix d’une commande");
                 Console.WriteLine("3. Déterminer le trajet optimal");
                 Console.WriteLine("4. Modifier une commande");
-                Console.WriteLine("5. Retourner au Menu principal");
+                Console.WriteLine("5. Afficher les commandes");
+                Console.WriteLine("6. Retourner au Menu principal");
                 Console.Write("Choisissez une option : ");
 
                 string choix = Console.ReadLine();
@@ -799,6 +863,9 @@ namespace Livrable2
                         ModifierCommande();
                         break;
                     case "5":
+                        AfficherCommandes();
+                        break;
+                    case "6":
                         return;
                     default:
                         Console.WriteLine("Option invalide, veuillez réessayer.");
@@ -850,11 +917,25 @@ namespace Livrable2
                 return;
             }
 
-            Console.Write("Entrez votre ID utilisateur : ");
+            Console.Write("Entrez votre ID utilisateur (Tapez A pour Afficher les clients: ");
             string idU = Console.ReadLine();
+            if (idU == "A")
+            {
+                AfficherClients();
+                Console.Write("Entrez votre id Utilisateur");
+                idU = Console.ReadLine();
+            }
 
-            Console.Write("Entrez l'ID du cuisinier auquel vous voulez commander : ");
+
+            Console.Write("Entrez l'ID du cuisinier auquel vous voulez commander (Tapez A pour afficher les cuisiniers: ");
             string idCuisinier = Console.ReadLine();
+            if (idCuisinier == "A")
+            {
+                AfficherCuisiniers();
+                Console.Write("ID du cuisinier auquel vous voulez commander : ");
+                idCuisinier = Console.ReadLine();
+            }
+
 
             int stationArrivee = -1;
             int stationDepart = -1;
@@ -953,7 +1034,7 @@ namespace Livrable2
                     cmd.ExecuteNonQuery();
                 }
 
-                Console.WriteLine("Commande enregistrée avec succès !");
+                Console.WriteLine("La commande "+idCommande+" a été enregistrée avec succès !");
             }
         }
 
@@ -963,8 +1044,14 @@ namespace Livrable2
         /// </summary>
         public static void AfficherPrixCommande()
         {
-            Console.Write("Entrez l'id de la commande : ");
+            Console.Write("Entrez l'id de la commande (Entrez A pour voir toutes l es commandes) : ");
             string idCommande = Console.ReadLine();
+            if (idCommande == "A")
+            {
+                AfficherCommandes();
+                Console.Write("ID de la commande à Afficher : ");
+                idCommande = Console.ReadLine();
+            }
 
             string requetePrix = "SELECT prix FROM Commande WHERE idCommande = '" + idCommande + "'";
             using (MySqlConnection connection = new MySqlConnection(connectionString))
@@ -993,8 +1080,14 @@ namespace Livrable2
         /// </summary>
         public static void DeterminerTrajetOptimal()
         {
-            Console.Write("Entrez le numéro de commande : ");
+            Console.Write("Entrez le numéro de commande (Appuyez sur A pour voir les commandes) : ");
             string idCommande = Console.ReadLine();
+            if (idCommande == "A")
+            {
+                AfficherCommandes();
+                Console.Write("ID de la commande : ");
+                idCommande = Console.ReadLine();
+            }
 
             int stationDepart = -1;
             int stationArrivee = -1;
@@ -1076,8 +1169,14 @@ namespace Livrable2
         /// </summary>
         public static void ModifierCommande()
         {
-            Console.Write("Entrez l'ID de la commande à modifier : ");
+            Console.Write("Entrez l'ID de la commande à modifier (Appuyez sur A pour voir les commandes) : ");
             string idCommande = Console.ReadLine();
+            if (idCommande == "A")
+            {
+                AfficherCommandes();
+                Console.Write("ID de la commande a modifier : ");
+                idCommande = Console.ReadLine();
+            }
 
             Console.WriteLine("\nQue voulez-vous modifier ?");
             Console.WriteLine("1. Statut");
@@ -1239,6 +1338,38 @@ namespace Livrable2
             }
 
             Console.WriteLine("Plat ajouté avec succès !");
+        }
+
+        /// <summary>
+        /// Affiche le prix d'une commande
+        /// </summary>
+        public static void AfficherCommandes()
+        {
+            using (MySqlConnection connection = new MySqlConnection(connectionString))
+            {
+                connection.Open();
+
+                string requete = "SELECT idCommande, dateCommande, prix, statut, idUtilisateur, idStationDepart, idStationArrivee " +
+                                 "FROM Commande ORDER BY dateCommande DESC";
+
+                using (MySqlCommand cmd = new MySqlCommand(requete, connection))
+                using (MySqlDataReader reader = cmd.ExecuteReader())
+                {
+                    Console.WriteLine("\n===== LISTE DES COMMANDES =====");
+                    while (reader.Read())
+                    {
+                        Console.WriteLine(
+                            "Commande : " + reader["idCommande"] +
+                            " | Client : " + reader["idUtilisateur"] +
+                            " | Date : " + reader["dateCommande"] +
+                            " | Prix : " + reader["prix"] + "euros" +
+                            " | Statut : " + reader["statut"] +
+                            " | Départ : Station " + reader["idStationDepart"] +
+                            " | Arrivée : Station " + reader["idStationArrivee"]
+                        );
+                    }
+                }
+            }
         }
 
 
