@@ -13,6 +13,7 @@ using System.IO;
 using System.Text.Json;
 
 
+
 namespace Livrable2
 {
     class Program
@@ -83,6 +84,8 @@ namespace Livrable2
                 Console.WriteLine("4. Afficher les clients");
                 Console.WriteLine("5. Retour au menu principal");
                 Console.WriteLine("6. Exporter les clients au Format XML et JSON");
+                Console.WriteLine("7. Importer clients au format XML");
+                Console.WriteLine("8. Importer clients au format JSON");
                 Console.Write("Votre choix : ");
                 string choix = Console.ReadLine();
 
@@ -109,6 +112,14 @@ namespace Livrable2
                 else if (choix == "6")
                 {
                     ExporterClients();
+                }
+                else if (choix == "7")
+                {
+                    ImporterUnClientDepuisXML();
+                }
+                else if (choix == "8")
+                {
+                    ImporterUnClientDepuisJSON();
                 }
 
                 else
@@ -415,19 +426,160 @@ namespace Livrable2
 
             Console.WriteLine("Export XML et JSON terminés.");
 
-            // Ouvre les deux fichiers
+            
             System.Diagnostics.Process.Start("explorer.exe", xmlPath);
             System.Diagnostics.Process.Start("explorer.exe", jsonPath);
         }
 
-
-        #endregion
-
-        #region MODULE CUISINIER
         /// <summary>
-        /// Sous menu pour gérer les opérations liées aux cuisiniers
+        /// Pour importer un client depuis un fichier XML
         /// </summary>
-        static void ModuleCuisinier()
+        public static void ImporterUnClientDepuisXML()
+        {
+            Console.Write("Entrez le nom du fichier XML (ex: clients_importxml.xml): ");
+            string fichier = Console.ReadLine();
+
+            if (!File.Exists(fichier))
+            {
+                Console.WriteLine("Fichier introuvable.");
+                return;
+            }
+
+            XmlSerializer serializer = new XmlSerializer(typeof(ClientSerializable));
+            ClientSerializable client;
+
+            using (FileStream stream = new FileStream(fichier, FileMode.Open))
+            {
+                client = (ClientSerializable)serializer.Deserialize(stream);
+            }
+
+            Console.Write("Mot de passe du client : ");
+            string mdp = Console.ReadLine();
+
+            Console.Write("Nom de la station la plus proche (ex: Balard) : ");
+            string nomStation = Console.ReadLine();
+
+            Graphe<int> g = new Graphe<int>("Connexions.txt", "StationsMetro.txt");
+            int idStation = g.NomAIdentifiant(nomStation);
+            if (idStation == 0)
+            {
+                Console.WriteLine("Station inconnue,. import annulé");
+                return;
+            }
+
+            using (MySqlConnection conn = new MySqlConnection(connectionString))
+            {
+                conn.Open();
+
+                MySqlCommand verif = new MySqlCommand("SELECT COUNT(*) FROM Utilisateur WHERE idUtilisateur = @id", conn);
+                verif.Parameters.AddWithValue("@id", client.Id);
+                int existe = Convert.ToInt32(verif.ExecuteScalar());
+                if (existe > 0)
+                {
+                    Console.WriteLine("Client déjà existant.");
+                    return;
+                }
+
+                MySqlCommand insertU = new MySqlCommand("INSERT INTO Utilisateur VALUES (@id, @mail, @nom, @prenom, @adresse, @tel, @mdp, @station)", conn);
+                insertU.Parameters.AddWithValue("@id", client.Id);
+                insertU.Parameters.AddWithValue("@mail", client.Email);
+                insertU.Parameters.AddWithValue("@nom", client.Nom);
+                insertU.Parameters.AddWithValue("@prenom", client.Prenom);
+                insertU.Parameters.AddWithValue("@adresse", client.Adresse);
+                insertU.Parameters.AddWithValue("@tel", client.Telephone);
+                insertU.Parameters.AddWithValue("@mdp", mdp);
+                insertU.Parameters.AddWithValue("@station", idStation);
+                insertU.ExecuteNonQuery();
+
+                MySqlCommand insertC = new MySqlCommand("INSERT INTO Client (idUtilisateur, typeClient) VALUES (@id, @type)", conn);
+                insertC.Parameters.AddWithValue("@id", client.Id);
+                insertC.Parameters.AddWithValue("@type", client.TypeClient);
+                insertC.ExecuteNonQuery();
+            }
+
+            Console.WriteLine("Client importé avec succès !");
+        }
+
+
+       
+
+    public static void ImporterUnClientDepuisJSON()
+    {
+       
+        Console.Write("Nom du fichier JSON (ex: client_importjson.json) : ");
+        string fichier = Console.ReadLine();
+
+        if (!File.Exists(fichier))
+        {
+            Console.WriteLine("Fichier introuvable.");
+            return;
+        }
+
+        string contenu = File.ReadAllText(fichier);
+        ClientSerializable client = JsonSerializer.Deserialize<ClientSerializable>(contenu);
+
+        Console.Write("Mot de passe du client : ");
+        string mdp = Console.ReadLine();
+
+        Console.Write("Nom de la station la plus proche (ex: Nation ) : ");
+        string nomStation = Console.ReadLine();
+
+        Graphe<int> graphe = new Graphe<int>("Connexions.txt", "StationsMetro.txt");
+        int idStation = graphe.NomAIdentifiant(nomStation);
+
+        if (idStation == 0)
+        {
+            Console.WriteLine("Station inconnue. Import annulé.");
+            return;
+        }
+
+        using (MySqlConnection conn = new MySqlConnection(connectionString))
+        {
+            conn.Open();
+
+            MySqlCommand verif = new MySqlCommand("SELECT COUNT(*) FROM Utilisateur WHERE idUtilisateur = @id", conn);
+            verif.Parameters.AddWithValue("@id", client.Id);
+            int existe = Convert.ToInt32(verif.ExecuteScalar());
+            if (existe > 0)
+            {
+                Console.WriteLine("Client déjà existant.");
+                return;
+            }
+
+            MySqlCommand insertU = new MySqlCommand(
+                "INSERT INTO Utilisateur (idUtilisateur, adresseMail, nom, prenom, adresse, telephone, password, StationLaPlusProche) " +
+                "VALUES (@id, @mail, @nom, @prenom, @adresse, @tel, @mdp, @station)", conn);
+            insertU.Parameters.AddWithValue("@id", client.Id);
+            insertU.Parameters.AddWithValue("@mail", client.Email);
+            insertU.Parameters.AddWithValue("@nom", client.Nom);
+            insertU.Parameters.AddWithValue("@prenom", client.Prenom);
+            insertU.Parameters.AddWithValue("@adresse", client.Adresse);
+            insertU.Parameters.AddWithValue("@tel", client.Telephone);
+            insertU.Parameters.AddWithValue("@mdp", mdp);
+            insertU.Parameters.AddWithValue("@station", idStation);
+            insertU.ExecuteNonQuery();
+
+            MySqlCommand insertC = new MySqlCommand(
+                "INSERT INTO Client (idUtilisateur, typeClient) VALUES (@id, @type)", conn);
+            insertC.Parameters.AddWithValue("@id", client.Id);
+            insertC.Parameters.AddWithValue("@type", client.TypeClient);
+            insertC.ExecuteNonQuery();
+        }
+
+        Console.WriteLine("Client importé avec succès !");
+    }
+
+
+
+
+
+    #endregion
+
+    #region MODULE CUISINIER
+    /// <summary>
+    /// Sous menu pour gérer les opérations liées aux cuisiniers
+    /// </summary>
+    static void ModuleCuisinier()
         {
             while (true)
             {
@@ -548,7 +700,7 @@ namespace Livrable2
                     cmd.ExecuteNonQuery();
                 }
             }
-            Console.WriteLine("Cuisinier ajouté avec succès.");
+            Console.WriteLine("Cuisinier "+idUtilisateur+" ajouté avec succès.");
         }
         /// <summary>
         /// Permet de modifier les infos d'un cuisinier dèjà existant
