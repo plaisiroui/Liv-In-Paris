@@ -768,7 +768,7 @@ namespace Livrable2
                 using (MySqlCommand cmd = new MySqlCommand(requeteclient, conn))
                 {
                     cmd.Parameters.AddWithValue("@id", id);
-                    cmd.Parameters.AddWithValue("@type", specialite);
+                    cmd.Parameters.AddWithValue("@specialite", specialite);
                     cmd.ExecuteNonQuery();
                 }
             }
@@ -825,77 +825,87 @@ namespace Livrable2
         /// </summary>
         static void AfficherClientsServis()
         {
-            Console.Write("ID du cuisinier : ");
+          
+            Console.Write("ID du cuisinier (Entrez A pour afficher les cuisiniers): ");
             string idCuisinier = Console.ReadLine();
+            if (idCuisinier == "A")
+            {
+                AfficherCuisiniers();
+                Console.Write("ID du cuisinier : ");
+                idCuisinier = Console.ReadLine();
+            }
 
-            Console.Write("Afficher depuis l'inscription (Oui/Non) ? ");
-            string choix = Console.ReadLine().ToUpper();
+            Console.Write("Afficher depuis l'inscription ? (Oui / Non) : ");
+            string choix = Console.ReadLine().Trim().ToUpper();
 
-            string requeteAfficheClients;
+            string requete;
+            bool avecPeriode = false;
+            string dateDebut = "";
+                string dateFin = "";
+
             if (choix == "OUI")
             {
-                requeteAfficheClients = "SELECT DISTINCT idUtilisateur, nom, prenom " +
-                        "FROM Commande " +
-                        "JOIN Client using(idUtilisateur) " +
-                        "WHERE idUtilisateur = @id";
-
-                using (MySqlCommand cmd = new MySqlCommand(connectionString))
-                {
-                    cmd.Parameters.AddWithValue("@id", idCuisinier);
-                }
+                requete = @" SELECT DISTINCT idUtilisateur, nom, prenom FROM Commande JOIN Utilisateur using(idUtilisateur) WHERE idCuisinier = @id";
             }
             else if (choix == "NON")
             {
                 Console.Write("Date de début (YYYY-MM-DD) : ");
-                string dateDebut = Console.ReadLine();
+                dateDebut = Console.ReadLine();
 
                 Console.Write("Date de fin (YYYY-MM-DD) : ");
-                string dateFin = Console.ReadLine();
+                dateFin = Console.ReadLine();
 
-                requeteAfficheClients = "SELECT DISTINCT idUTilisateur, nom, prenom " +
-                        "FROM Commande " +
-                        "JOIN Client using(idUtilisateur) " +
-                        "WHERE Cuisinier.idUtilisateur = @id " +
-                        "AND dateCommande BETWEEN @dateDebut AND @dateFin";
+                requete = @" SELECT DISTINCT idUtilisateur, nom, prenom FROM Commande JOIN Utilisateur using(idUtilisateur)"+
+                            "WHERE idCuisinier = @id AND dateCommande BETWEEN @dateDebut AND @dateFin";
 
-                using (MySqlCommand cmd = new MySqlCommand(connectionString))
-                {
-                    cmd.Parameters.AddWithValue("@id", idCuisinier);
-
-                    cmd.Parameters.AddWithValue("@dateDebut", dateDebut);
-                    cmd.Parameters.AddWithValue("@dateFin", dateFin);
-
-                }
+                avecPeriode = true;
             }
             else
             {
-                Console.WriteLine("Veuillez choisir une réponse entre Oui et Non.");
+                Console.WriteLine("Réponse invalide. Veuillez saisir 'Oui' ou 'Non'.");
+                return;
             }
 
-
-            if (choix == "OUI" || choix == "NON")
+            using (MySqlConnection connection = new MySqlConnection(connectionString))
             {
-
-
-                using (MySqlCommand cmd = new MySqlCommand(connectionString))
+                connection.Open();
+                using (MySqlCommand cmd = new MySqlCommand(requete, connection))
                 {
+                    cmd.Parameters.AddWithValue("@id", idCuisinier);
+
+                    if (avecPeriode)
+                    {
+                        cmd.Parameters.AddWithValue("@dateDebut", dateDebut);
+                        cmd.Parameters.AddWithValue("@dateFin", dateFin);
+                    }
 
                     using (MySqlDataReader reader = cmd.ExecuteReader())
                     {
+                        Console.WriteLine("\n--- Clients servis ---");
+                        bool auMoinsUn = false;
                         while (reader.Read())
                         {
                             Console.WriteLine("Client : " + reader["nom"] + " " + reader["prenom"]);
+                            auMoinsUn = true;
+                        }
+
+                        if (!auMoinsUn)
+                        {
+                            Console.WriteLine("Aucun client trouvé pour ce cuisinier.");
                         }
                     }
                 }
             }
         }
+
         /// <summary>
         /// Affiche les plats réalisés par un cuisinier, trés par fréquence de commande
         /// </summary>
         static void AfficherPlatsParFrequence()
         {
-            Console.Write("ID du cuisinier (Tapez A d'abord pour afficher les cuisiniers ");
+            Console.WriteLine("\n=== AFFICHAGE DES PLATS PAR FRÉQUENCE ===");
+
+            Console.Write("ID du cuisinier (Entrez A pour afficher les cuisiniers) : ");
             string id = Console.ReadLine();
             if (id == "A")
             {
@@ -904,37 +914,60 @@ namespace Livrable2
                 id = Console.ReadLine();
             }
 
-            string requeteFreqPlat = "SELECT Plat.nom, COUNT(*) as freq FROM Commande " +
-                           "JOIN Plat using (idPlat) " +
-                           "WHERE Cuisinier.idUtilisateur = @id " +
-                           "GROUP BY Plat.nom ORDER BY freq DESC";
-
-            using (MySqlCommand cmd = new MySqlCommand(connectionString))
+            using (MySqlConnection connection = new MySqlConnection(connectionString))
             {
-                cmd.Parameters.AddWithValue("@id", id);
-                using (MySqlDataReader reader = cmd.ExecuteReader())
+                connection.Open();
+
+                string requeteFreqPlat = "SELECT nomPlat, COUNT(*) as freq FROM Commande c " +
+                                         "JOIN Plat using (idPlat) " +
+                                         "WHERE c.idCuisinier = @id " +
+                                         "GROUP BY nomPlat ORDER BY freq DESC";
+
+                using (MySqlCommand cmd = new MySqlCommand(requeteFreqPlat, connection))
                 {
-                    while (reader.Read())
+                    cmd.Parameters.AddWithValue("@id", id);
+
+                    using (MySqlDataReader reader = cmd.ExecuteReader())
                     {
-                        Console.WriteLine("Plat: " + reader["nom"] + " | Fréquence: " + reader["freq"]);
+                        Console.WriteLine("\n--- Plats réalisés par fréquence ---");
+                        bool auMoinsUn = false;
+
+                        while (reader.Read())
+                        {
+                            string nomPlat = reader["nomPlat"].ToString();
+                            int frequence = Convert.ToInt32(reader["freq"]);
+                            Console.WriteLine("Plat : " + nomPlat + " | Fréquence : " + frequence);
+                            auMoinsUn = true;
+                        }
+
+                        if (!auMoinsUn)
+                        {
+                            Console.WriteLine("Aucun plat trouvé pour ce cuisinier.");
+                        }
                     }
                 }
             }
         }
+
         /// <summary>
         /// Affiche le nom plat du jour s'il existe
         /// </summary>
         static void AfficherPlatDuJour()
         {
-            string requetePlatJ = "SELECT nom FROM Plat WHERE platDuJour = 1";
+            
 
-            using (MySqlCommand cmd = new MySqlCommand(connectionString))
+            using (MySqlConnection connection = new MySqlConnection(connectionString))
             {
+                connection.Open();
+
+                string requetePlatJ = "SELECT nomPlat FROM Plat WHERE platDuJour = 1";
+
+                using (MySqlCommand cmd = new MySqlCommand(requetePlatJ, connection))
                 using (MySqlDataReader reader = cmd.ExecuteReader())
                 {
                     if (reader.Read())
                     {
-                        Console.WriteLine("Plat du jour : " + reader["nom"]);
+                        Console.WriteLine("Plat du jour : " + reader["nomPlat"]);
                     }
                     else
                     {
@@ -943,6 +976,7 @@ namespace Livrable2
                 }
             }
         }
+
         /// <summary>
         /// Affiche la liste des cuisiniers
         /// </summary>
@@ -1448,7 +1482,7 @@ namespace Livrable2
             string type = Console.ReadLine();
             Console.Write("Nombre de personnes : ");
             int nbPers = int.Parse(Console.ReadLine());
-            Console.Write("Prix par personne : ");
+            Console.Write("Prix du plat ");
             double prix = double.Parse(Console.ReadLine());
             Console.Write("Nationalité : ");
             string nat = Console.ReadLine();
@@ -1927,7 +1961,7 @@ namespace Livrable2
             using var conn = new MySqlConnection(connectionString);
             conn.Open();
 
-            string requeteLJ = "SELECT idUtilisateur, nom, prenom  FROM Utilisateur " +
+            string requeteLJ = "SELECT idUtilisateur, nom, prenom  FROM Client Join Utilisateur using(idUtilisateur) " +
                 "  LEFT JOIN Commande using(idUtilisateur)" +
                 " WHERE idCommande IS NULL;";
 
@@ -2002,7 +2036,7 @@ namespace Livrable2
             }
         }
         /// <summary>
-        /// Affiche les cuisiniers ayant au moins un plat 
+        /// Affiche les cuisiniers ayant au moins un plat du jour
         /// </summary>
         static void RequeteExists()
         {
