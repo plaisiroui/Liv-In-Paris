@@ -51,7 +51,7 @@ namespace Livrable2
                         break;
                     case "3":
                         ModuleCommande();
-                        Console.WriteLine("en cours");
+                       
                         break;
                     case "4":
                         ModuleStatistique();
