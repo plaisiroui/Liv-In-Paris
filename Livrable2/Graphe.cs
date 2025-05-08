@@ -21,12 +21,12 @@ namespace Livrable2
         /// <param name="stations">Fichier contenant toutes les stations</param>
         public Graphe(string connexions, string stations)
         {
-            double[,] matrice = MatriceIncidence(connexions);  
+            double[,] matrice = MatriceIncidence(connexions);
 
-            Noeud<T>[] graph = new Noeud<T>[matrice.GetLength(0)]; 
+            Noeud<T>[] graph = new Noeud<T>[matrice.GetLength(0)];
             for (int p = 1; p <= matrice.GetLength(0); p++)
             {
-                graph[p-1] = new Noeud<T>(p, matrice, stations);
+                graph[p - 1] = new Noeud<T>(p, matrice, stations);
             }
             this.graph = graph;
         }
@@ -56,7 +56,7 @@ namespace Livrable2
         /// <returns>La matrice qui associe pour chaque station de métro ces liens avec les autres</returns>
         static double[,] MatriceIncidence(string connexion)
         {
-            double[] m = Array.ConvertAll(File.ReadAllText(connexion) 
+            double[] m = Array.ConvertAll(File.ReadAllText(connexion)
                 .Split(new[] { ';', '\n' }, StringSplitOptions.RemoveEmptyEntries), double.Parse);
             double[,] matrice = new double[Convert.ToInt32(m[0]), Convert.ToInt32(m[1])];
             for (int i = 0; i < matrice.GetLength(0); i++)
@@ -66,7 +66,7 @@ namespace Livrable2
                     matrice[i, j] = 0;
                 }
             }
-            for (int i = 2; i < m.Length; i += 4) 
+            for (int i = 2; i < m.Length; i += 4)
             {
                 if (matrice[Convert.ToInt32(m[i] - 1), Convert.ToInt32(m[i + 1] - 1)] == 0)
                 {
@@ -82,24 +82,25 @@ namespace Livrable2
 
         /// <summary>
         /// Vérifie si le graphe contient un cycle
+        /// On utilise un parcourt en profondeur
         /// </summary>
         /// <param name="graphe">Graphe sous forme de tableau de noeuds</param>
         /// <returns>True si un cycle est détecté</returns>
         static bool ContientCycle(Noeud<T>[] graphe)
         {
-            List<int> visite = new List<int>(); 
-            List<int> parent = new List<int>(new int[graphe.Length]); 
+            List<int> visite = new List<int>();
+            List<int> parent = new List<int>(new int[graphe.Length]);
 
             for (int i = 0; i < graphe.Length; i++)
             {
                 parent[i] = -1;
             }
 
-            List<int> aVisiter = new List<int>(); 
+            List<int> aVisiter = new List<int>();
 
             foreach (Noeud<T> noeud in graphe)
             {
-                if (!visite.Contains(noeud.Station.Id)) 
+                if (!visite.Contains(noeud.Station.Id))
                 {
                     aVisiter.Add(noeud.Station.Id);
 
@@ -115,12 +116,12 @@ namespace Livrable2
 
                         foreach (int voisin in graphe[actuel].Lien)
                         {
-                            if (!visite.Contains(voisin)) 
+                            if (!visite.Contains(voisin))
                             {
                                 aVisiter.Add(voisin);
                                 parent[voisin] = actuel;
                             }
-                            else if (parent[actuel] != voisin) 
+                            else if (parent[actuel] != voisin)
                             {
                                 return true;
                             }
@@ -139,7 +140,7 @@ namespace Livrable2
         /// <returns>True si le graphe est connexe</returns>
         static bool EstConnexe(Noeud<T>[] graphe)
         {
-            bool result = false;  
+            bool result = false;
             if (graphe.Length == ParcoursLargeur(graphe, graphe[0].Station.Id).Length)
             {
                 result = true;
@@ -158,9 +159,9 @@ namespace Livrable2
         /// <returns>Liste des stations visitées</returns>
         static int[] ParcoursProfondeur(Noeud<T>[] graph, int id)
         {
-            List<int> resultat = new List<int>(); 
-            List<int> visite = new List<int>(); 
-            List<int> pile = new List<int>(); 
+            List<int> resultat = new List<int>();
+            List<int> visite = new List<int>();
+            List<int> pile = new List<int>();
 
             pile.Add(id);
             while (pile.Count > 0)
@@ -168,12 +169,12 @@ namespace Livrable2
                 int noeudActuel = pile[pile.Count - 1];
                 pile.RemoveAt(pile.Count - 1);
 
-                if (!visite.Contains(noeudActuel)) 
+                if (!visite.Contains(noeudActuel))
                 {
-                    visite.Add(noeudActuel); 
+                    visite.Add(noeudActuel);
                     resultat.Add(noeudActuel);
 
-                    
+
                     for (int i = graph[noeudActuel].Lien.Length - 1; i >= 0; i--)
                     {
                         int voisin = graph[noeudActuel].Lien[i];
@@ -196,16 +197,16 @@ namespace Livrable2
         /// <returns>Liste des stations visitées</returns>
         static int[] ParcoursLargeur(Noeud<T>[] graph, int id)
         {
-            
+
             List<int> parcours = new List<int>();
-            parcours.Add(id);                              
-            for (int i = 0; i < parcours.Count; i++)          
+            parcours.Add(id);
+            for (int i = 0; i < parcours.Count; i++)
             {
-                for (int j = 0; j < graph[parcours[i]-1].Lien.Length; j++)
-                {   
-                    if (!parcours.Contains(graph[parcours[i]-1].Lien[j]))
+                for (int j = 0; j < graph[parcours[i] - 1].Lien.Length; j++)
+                {
+                    if (!parcours.Contains(graph[parcours[i] - 1].Lien[j]))
                     {
-                        parcours.Add(graph[parcours[i]-1].Lien[j]);
+                        parcours.Add(graph[parcours[i] - 1].Lien[j]);
                     }
                 }
             }
@@ -223,8 +224,8 @@ namespace Livrable2
         /// <param name="departId">Identifiant de la station de départ</param>
         /// <param name="arriveeId">Identifiant de la station d’arrivée</param>
         /// <returns>Liste des stations représentant le plus court chemin</returns>
-        public List<int> PlusCourtChemin(int departId, int arriveeId) 
-        {                                                             
+        public List<int> PlusCourtChemin(int departId, int arriveeId)
+        {
             List<int> result = null;
             List<int> c1 = Dijkstra(departId, arriveeId);
             List<int> c2 = BellmanFord(departId, arriveeId);
@@ -320,9 +321,9 @@ namespace Livrable2
 
             for (int i = 0; i < n; i++)
             {
-                distances[i] = double.MaxValue;  
-                precedents[i] = -1;              
-                visite[i] = false;               
+                distances[i] = double.MaxValue;
+                precedents[i] = -1;
+                visite[i] = false;
             }
 
             distances[departId - 1] = 0;
@@ -349,8 +350,8 @@ namespace Livrable2
                 Noeud<T> noeudActuel = graph[u];
                 for (int k = 0; k < noeudActuel.Lien.Length; k++)
                 {
-                    int v = noeudActuel.Lien[k] - 1;      
-                    double poids = noeudActuel.Poids[k];  
+                    int v = noeudActuel.Lien[k] - 1;
+                    double poids = noeudActuel.Poids[k];
 
                     if (!visite[v] && distances[u] + poids < distances[v])
                     {
@@ -456,9 +457,8 @@ namespace Livrable2
             int n = graph.Length;
             double[,] dist = new double[n, n];
             int[,] next = new int[n, n];
-            int[,] lignes = new int[n, n]; 
+            int[,] lignes = new int[n, n];
 
-            ///initialisation
             for (int i = 0; i < n; i++)
             {
                 for (int j = 0; j < n; j++)
@@ -481,7 +481,7 @@ namespace Livrable2
                 }
             }
 
-            
+
             for (int k = 0; k < n; k++)
             {
                 for (int i = 0; i < n; i++)
@@ -507,7 +507,7 @@ namespace Livrable2
                         {
                             dist[i, j] = nouvelleDistance;
                             next[i, j] = next[i, k];
-                            lignes[i, j] = ligneIK; 
+                            lignes[i, j] = ligneIK;
                         }
                     }
                 }
@@ -529,7 +529,7 @@ namespace Livrable2
             int v = arriveeId - 1;
 
             if (next[u, v] == -1)
-                return null; 
+                return null;
 
             List<int> chemin = new List<int> { departId };
 
@@ -567,7 +567,7 @@ namespace Livrable2
             double maxLat = graph.Max(n => n.Station.Latitude);
             int margin = 50;
 
-            
+
             Dictionary<int, SKPoint> positions = new();
             foreach (var n in graph)
             {
@@ -576,7 +576,7 @@ namespace Livrable2
                 positions[n.Station.Id] = new SKPoint(x, y);
             }
 
-            
+
             var edgePaint = new SKPaint { Color = SKColors.Gray, StrokeWidth = 1, IsAntialias = true };
             foreach (var n in graph)
             {
@@ -591,7 +591,7 @@ namespace Livrable2
                 }
             }
 
-            
+
             Dictionary<string, SKColor> ligneCouleurs = new()
             {
                 ["1"] = SKColors.Gold,
@@ -612,7 +612,7 @@ namespace Livrable2
                 ["14"] = SKColors.DarkViolet
             };
 
-            
+
             var textPaint = new SKPaint
             {
                 Color = SKColors.Black,
@@ -625,7 +625,7 @@ namespace Livrable2
             {
                 var pos = positions[n.Station.Id];
 
-                
+
                 SKColor couleur = SKColors.DarkGray;
                 if (n.Station.Lignes.Length > 0)
                 {
@@ -637,11 +637,11 @@ namespace Livrable2
                 var nodePaint = new SKPaint { Color = couleur, IsAntialias = true };
                 canvas.DrawCircle(pos, 6, nodePaint);
 
-                
+
                 canvas.DrawText(n.Station.Nom, pos.X, pos.Y - 10, textPaint);
             }
 
-            
+
             string filePath = "graphe_paris_colore.png";
             using var image = surface.Snapshot();
             using var data = image.Encode(SKEncodedImageFormat.Png, 100);
@@ -771,11 +771,11 @@ namespace Livrable2
         public int[] WelshPowellColoration()
         {
             int n = graph.Length;
-            int[] couleurs = new int[n]; 
+            int[] couleurs = new int[n];
 
-            
-            int[] ids = new int[n];      
-            int[] degres = new int[n];   
+
+            int[] ids = new int[n];
+            int[] degres = new int[n];
 
             for (int i = 0; i < n; i++)
             {
@@ -783,7 +783,7 @@ namespace Livrable2
                 degres[i] = graph[i].Lien.Length;
             }
 
-            
+
             for (int i = 0; i < n - 1; i++)
             {
                 for (int j = i + 1; j < n; j++)
@@ -807,7 +807,7 @@ namespace Livrable2
                 {
                     couleurs[idCourant] = couleurActuelle;
 
-                    
+
                     for (int j = 0; j < n; j++)
                     {
                         int autreId = ids[j];
@@ -884,4 +884,3 @@ namespace Livrable2
     }
 
 }
-
