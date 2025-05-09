@@ -1764,7 +1764,8 @@ namespace Livrable2
                 Console.WriteLine("8. Plats plus chers qu’au moins un plat du cuisinier choisi(ANY)");
                 Console.WriteLine("9. Plats plus chers que ceux du cuisinier choisi(ALL)");
                 Console.WriteLine("10. Cuisiniers avec un plat du jour (EXISTS)");
-                Console.WriteLine("11. Retour au menu");
+                Console.WriteLine("11. Coloratoin des stations de métro");
+                Console.WriteLine("12. Retour au menu");
 
 
                 Console.Write("Choisissez une option : ");
@@ -1803,6 +1804,9 @@ namespace Livrable2
                         RequeteExists();
                         break;
                     case "11":
+                        Coloration();
+                        break;
+                    case "12":
                         return;
                     default:
                         Console.WriteLine("Option invalide.");
@@ -2055,7 +2059,26 @@ namespace Livrable2
                 Console.WriteLine(reader["idUtilisateur"] + " – " + reader["nom"] + " " + reader["prenom"]);
             }
         }
-
+        /// <summary>
+        /// Affiche les caractéristiques de coloratoin du plan de station de métro 
+        /// </summary>
+        static void Coloration()
+        {
+            string fichier_connexion = "Connexions.txt";
+            string fichier_StationMetro = "StationsMetro.txt";
+            Graphe<int> g1 = new Graphe<int>(fichier_connexion, fichier_StationMetro);
+            int[] couleurs = g1.WelshPowellColoration();
+            for (int i = 0; i< couleurs.Length; i++)
+            {
+                Console.WriteLine("La couleur de la station " + g1.Graph[i].Station.Nom + " est " + couleurs[i]);
+            }
+            int nbC = g1.NombreChromatique();
+            Console.WriteLine("\nLe nombre chromatique des stations de Paris est : " + nbC);
+            if (g1.EstBiparti()) { Console.WriteLine("Le graphe est biparti. "); }
+            else { Console.WriteLine("Le graphe n'est pas biparti"); }
+            if (g1.EstPotentiellementPlanaire()) { Console.WriteLine("Le graphe est potentiellement planaire. "); }
+            else { Console.WriteLine("Le graphe n'est pas planaire. "); }
+        }        
         #endregion
 
     }
