@@ -391,10 +391,12 @@ namespace Livrable2
 
             double[] distances = new double[n];
             int[] precedents = new int[n];
+            double[] distancesAvant = new double[n];
 
             for (int i = 0; i < n; i++)
             {
                 distances[i] = double.MaxValue;
+                distancesAvant[i] = double.MaxValue;
                 precedents[i] = -1;
             }
 
@@ -418,6 +420,27 @@ namespace Livrable2
                         }
                     }
                 }
+
+                
+                bool identique = true;
+                for (int j = 0; j < n; j++)
+                {
+                    if (distances[j] != distancesAvant[j])
+                    {
+                        identique = false;
+                        break;
+                    }
+                }
+
+                if (identique)
+                {
+                    break;
+                }
+
+                for (int j = 0; j < n; j++)
+                {
+                    distancesAvant[j] = distances[j];
+                }
             }
 
             List<int> chemin = new List<int>();
@@ -436,7 +459,7 @@ namespace Livrable2
             }
 
             return chemin;
-        }
+        }  
 
         int TrouverLigneCommune(int[] lignes1, int[] lignes2)
         {
